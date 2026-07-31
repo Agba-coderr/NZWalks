@@ -1,0 +1,79 @@
+﻿using NZWalks.API.Data;
+using NZWalks.API.Models.Domain;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace NZWalks.API.Repositories
+{
+    public class SQLWalkRepository : IWalkRepository
+    {
+        private readonly NZWalksDbContext dbcontext;
+
+        public SQLWalkRepository(NZWalksDbContext dbcontext)
+        {
+            this.dbcontext = dbcontext;
+        }
+        public async Task<Walk> CreateWalkAsync(Walk walk)
+        {
+            await dbcontext.Walks.AddAsync(walk);
+            await dbcontext.SaveChangesAsync();
+            return walk;
+        }
+
+        public async Task<Walk?> DeleteWalkAsync(Guid id)
+        {
+            var exisitngWalk = await dbcontext.Walks.FindAsync(id);
+            if (exisitngWalk == null)
+            {
+                return null;
+            }
+
+            dbcontext.Walks.Remove(exisitngWalk);
+            await dbcontext.SaveChangesAsync();
+            return exisitngWalk;
+        }
+
+        public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
+        {
+            var walks = dbcontext.Walks.Include("Difficulty").Include("Region").AsQueryable();
+            //Filtering
+            if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
+            {
+                if (filterOn.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = walks.Where(x => x.Name.Contains(filterQuery));
+                }
+            }
+
+            return await walks.ToListAsync();
+
+            //Previous Implementation without filtering
+            //return await dbcontext.Walks.Include("Difficulty").Include("Region").ToListAsync(); //or x => x.Difficulty).Include(x => x.Region).ToListAsync();
+        }
+
+        public async Task<Walk?> GetWalkByIdAsync(Guid id)
+        {
+            return await dbcontext.Walks.Include("Difficulty").Include("Region").FirstOrDefaultAsync(w => w.Id == id);
+        }
+
+        public async Task<Walk?> UpdateWalkAsync(Guid id, Walk walk)
+        {
+            var exisitingWalk = await dbcontext.Walks.FindAsync(id);
+
+            if (exisitingWalk == null)
+            {
+                return null;
+            }
+
+            exisitingWalk.Name = walk.Name;
+            exisitingWalk.Description = walk.Description;
+            exisitingWalk.LengthInKm = walk.LengthInKm;
+            exisitingWalk.WalkImageUrl = walk.WalkImageUrl;
+            exisitingWalk.DifficultyId = walk.DifficultyId;
+            exisitingWalk.RegionId = walk.RegionId;
+
+            await dbcontext.SaveChangesAsync();
+            return exisitingWalk;
+        }
+    }
+}

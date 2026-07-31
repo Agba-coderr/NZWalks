@@ -1,6 +1,8 @@
-﻿namespace NZWalks.API.Models.Domain
+﻿using Microsoft.Identity.Client;
+
+namespace NZWalks.API.Models.DTO
 {
-    public class Walk
+    public class WalkDto
     {
         public Guid Id { get; set; }
 
@@ -16,10 +18,8 @@
 
         public Guid RegionId { get; set; }
 
+        public required RegionDto Region { get; set; }
 
-        //Navigation Properties
-        public required Difficulty Difficulty { get; set; }
-
-        public required Region Region { get; set; }
+        public required DifficultyDto Difficulty { get; set; }
     }
 }
