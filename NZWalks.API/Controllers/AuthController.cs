@@ -32,7 +32,20 @@ namespace NZWalks.API.Controllers
             return Ok("User was registered! Please login");
         }
 
+        //POST: /api/Auth/Login
+        [HttpPost]
+        [Route("Login")]
+        public async Task <IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
+        {
+            var loginResponse = await authenticationService.LoginAsync(loginRequestDto);
 
+            if (loginResponse == null)
+            {
+                return BadRequest("Username or password incorrect");
+            }
+
+            return Ok(loginResponse);
+        }
 
     }
 }
