@@ -8,10 +8,10 @@ namespace NZWalks.API.Services
 
         Task<WalkDto?> GetWalkByIdAsync(Guid id);
 
-        Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto);
+        Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId);
 
-        Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto);
+        Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin);
 
-        Task<WalkDto?> DeleteWalkAsync(Guid id);
+        Task<WalkDto?> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin);
     }
 }

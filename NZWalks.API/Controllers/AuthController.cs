@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Services;
 
@@ -22,11 +20,12 @@ namespace NZWalks.API.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
         {
-            var registerDto = await authenticationService.RegisterAsync(registerRequestDto);
+            var result = await authenticationService.RegisterAsync(registerRequestDto);
 
-            if (registerDto == null)
+            if (!result.Succeeded)
             {
-                return BadRequest("Something went wrong");
+                var errors = result.Errors.Select(e => e.Description);
+                return BadRequest(new { Errors = errors });
             }
 
             return Ok("User was registered! Please login");
@@ -35,7 +34,7 @@ namespace NZWalks.API.Controllers
         //POST: /api/Auth/Login
         [HttpPost]
         [Route("Login")]
-        public async Task <IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
         {
             var loginResponse = await authenticationService.LoginAsync(loginRequestDto);
 
@@ -46,6 +45,5 @@ namespace NZWalks.API.Controllers
 
             return Ok(loginResponse);
         }
-
     }
 }

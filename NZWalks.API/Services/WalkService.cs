@@ -16,17 +16,34 @@ namespace NZWalks.API.Services
             this.mapper = mapper;
         }
 
-        public async Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto)
+        public async Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId)
         {
             var walk = mapper.Map<Walk>(addWalkRequestDto);
+
+            walk.CreatedByUserId = createdByUserId;
+
             walk = await walkRepository.CreateWalkAsync(walk);
+
             return mapper.Map<WalkDto>(walk);
         }
 
-        public async Task<WalkDto?> DeleteWalkAsync(Guid id)
+        public async Task<WalkDto?> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin)
         {
+            var existingWalk = await walkRepository.GetWalkByIdAsync(id);
+
+            if (existingWalk == null)
+            {
+                return null;
+            }
+
+            if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
+            {
+                throw new UnauthorizedAccessException("You do not own this walk.");
+            }
+
             var deleted = await walkRepository.DeleteWalkAsync(id);
-            return deleted == null ? null : mapper.Map<WalkDto>(deleted);
+
+            return mapper.Map<WalkDto>(deleted);
         }
 
         public async Task<List<WalkDto>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
@@ -41,11 +58,25 @@ namespace NZWalks.API.Services
             return walk == null ? null : mapper.Map<WalkDto>(walk);
         }
 
-        public async Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto)
+        public async Task<WalkDto?> UpdateWalkAsync( Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
         {
+            var existingWalk = await walkRepository.GetWalkByIdAsync(id);
+
+            if (existingWalk == null)
+            {
+                return null;
+            }
+
+            if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
+            {
+                throw new UnauthorizedAccessException("You do not own this walk.");
+            }
+
             var walk = mapper.Map<Walk>(updateWalkDto);
+
             var updated = await walkRepository.UpdateWalkAsync(id, walk);
-            return updated == null ? null : mapper.Map<WalkDto>(updated);
+
+            return mapper.Map<WalkDto>(updated);
         }
     }
 }

@@ -20,15 +20,19 @@ namespace NZWalks.API.Repositories
             // create claims
             var claims = new List<Claim>();
 
-            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            // include user id so you can tie created Walks to creator
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
+
+            // include email (ensure not null or validate before creating token)
+            claims.Add(new Claim(ClaimTypes.Email, user.Email ?? string.Empty));
 
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+            var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key configuration is missing.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -41,8 +45,6 @@ namespace NZWalks.API.Repositories
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-                
-
         }
     }
 }

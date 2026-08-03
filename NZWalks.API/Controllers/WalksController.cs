@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
-using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
-using NZWalks.API.Repositories;
 using NZWalks.API.Services;
+using System.Security.Claims;
 
 namespace NZWalks.API.Controllers
 {
@@ -20,6 +19,7 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery)
         {
             var walksDto = await walkService.GetAllWalksAsync(filterOn, filterQuery);
@@ -28,6 +28,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetWalkById([FromRoute] Guid id)
         {
             var walkDto = await walkService.GetWalkByIdAsync(id);
@@ -42,9 +43,16 @@ namespace NZWalks.API.Controllers
 
         [HttpPost]
         [ValidateModel]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateWalk([FromBody] AddWalkRequestDto addWalkRequestDto)
         {
-            var walkDto = await walkService.CreateWalkAsync(addWalkRequestDto);
+            // get the logged-in user id from token
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            // update the service signature to accept createdByUserId (see note)
+            var walkDto = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
 
             return CreatedAtAction(nameof(GetWalkById), new { id = walkDto.Id }, walkDto);
         }
@@ -52,9 +60,18 @@ namespace NZWalks.API.Controllers
         [HttpPut]
         [Route("{id:Guid}")]
         [ValidateModel]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> UpdateWalk([FromRoute] Guid id, [FromBody] UpdateWalkDto updateWalkDto)
         {
-            var walkDto = await walkService.UpdateWalkAsync(id, updateWalkDto);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var isAdmin = User.IsInRole("Admin");
+
+            var walkDto = await walkService.UpdateWalkAsync(id, updateWalkDto, userId, isAdmin);
 
             if (walkDto == null)
             {
@@ -66,9 +83,18 @@ namespace NZWalks.API.Controllers
 
         [HttpDelete]
         [Route("{id:Guid}")]
+        [Authorize(Roles = "Writer")]
         public async Task<IActionResult> DeleteWalk(Guid id)
         {
-            var walkDto = await walkService.DeleteWalkAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var isAdmin = User.IsInRole("Admin");
+
+            var walkDto = await walkService.DeleteWalkAsync(id, userId, isAdmin);
 
             if (walkDto == null)
             {

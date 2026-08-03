@@ -16,6 +16,8 @@
 
         public Guid RegionId { get; set; }
 
+        // who created this walk
+        public string CreatedByUserId { get; set; } = string.Empty;
 
         //Navigation Properties
         public required Difficulty Difficulty { get; set; }

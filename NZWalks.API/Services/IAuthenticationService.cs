@@ -5,7 +5,8 @@ namespace NZWalks.API.Services
 {
     public interface IAuthenticationService
     {
-        Task<IdentityUser?> RegisterAsync(RegisterRequestDto registerRequestDto);
+        // Return IdentityResult so callers can surface specific Identity errors
+        Task<IdentityResult> RegisterAsync(RegisterRequestDto registerRequestDto);
 
         Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto);
     }

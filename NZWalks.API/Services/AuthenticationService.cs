@@ -41,7 +41,8 @@ namespace NZWalks.API.Services
             return null;
         }
 
-        public async Task<IdentityUser?> RegisterAsync(RegisterRequestDto registerRequestDto)
+        // Return IdentityResult so controller can return specific errors to client
+        public async Task<IdentityResult> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
             var identityUser = new IdentityUser
             {
@@ -51,24 +52,14 @@ namespace NZWalks.API.Services
 
             var identityResult = await userManager.CreateAsync(identityUser, registerRequestDto.Password);
 
-            if (identityResult.Succeeded)
-            {
-                if (registerRequestDto.Roles != null && registerRequestDto.Roles.Any())
-                {
-                    identityResult = await userManager.AddToRolesAsync(identityUser, registerRequestDto.Roles);
+            if (!identityResult.Succeeded)
+                return identityResult;
 
-                    if (identityResult.Succeeded)
-                    {
-                        return identityUser;
-                    }
-                }
-                else
-                {
-                    return identityUser;
-                }
-            }
+            // Public registration: default to Reader role. Do not allow callers to assign roles.
+            var defaultRoles = new[] { "Reader" };
+            identityResult = await userManager.AddToRolesAsync(identityUser, defaultRoles);
 
-            return null;
+            return identityResult;
         }
     }
 }
