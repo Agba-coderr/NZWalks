@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
@@ -20,8 +20,10 @@ namespace NZWalks.API.Mappings
             CreateMap<UpdateWalkDto, Walk>().ReverseMap();
             CreateMap<Difficulty, DifficultyDto>().ReverseMap();
 
-            //
-            //CreateMap<IdentityUser, RegisterRequestDto>().ReverseMap();
+            // Image Automappings
+            CreateMap<ImageUplaodRequestDto, Image>()
+                .ForMember(dest => dest.FileExtension, opt => opt.MapFrom(src => Path.GetExtension(src.File.FileName)))
+                .ForMember(dest => dest.FileSizeInBytes, opt => opt.MapFrom(src => src.File.Length));
         }
     }
 }
