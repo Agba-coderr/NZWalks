@@ -7,33 +7,56 @@ namespace NZWalks.API.Services
 {
     public class WalkService : IWalkService
     {
-        private readonly IWalkRepository walkRepository;
-        private readonly IMapper mapper;
+        private readonly IWalkRepository _walkRepository;
+        private readonly IMapper _mapper;
+        private readonly IRegionRepository _regionRepository;
 
-        public WalkService(IWalkRepository walkRepository, IMapper mapper)
+        public WalkService(IWalkRepository walkRepository, IMapper mapper, IRegionRepository regionRepository)
         {
-            this.walkRepository = walkRepository;
-            this.mapper = mapper;
+            _walkRepository = walkRepository;
+            _mapper = mapper;
+            _regionRepository = regionRepository;
         }
 
         public async Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId)
         {
-            var walk = mapper.Map<Walk>(addWalkRequestDto);
+            var region = await _regionRepository.GetRegionByIdAsync(addWalkRequestDto.RegionId);
 
-            walk.CreatedByUserId = createdByUserId;
+            if (region == null)
+            {
+                throw new ArgumentException("Invalid region ID.");
+            }
 
-            walk = await walkRepository.CreateWalkAsync(walk);
+            var walk = new Walk
+            {
+                Name = addWalkRequestDto.Name,
+                Description = addWalkRequestDto.Description,
+                LengthInKm = addWalkRequestDto.LengthInKm,
+                WalkImageUrl = addWalkRequestDto.WalkImageUrl,
+                DifficultyType = addWalkRequestDto.DifficultyType,
+                RegionId = addWalkRequestDto.RegionId,
+                Region = region,
+                CreatedByUserId = createdByUserId
+            };
 
-            return mapper.Map<WalkDto>(walk);
+            walk = await _walkRepository.CreateWalkAsync(walk);
+
+            return _mapper.Map<WalkDto>(walk);
         }
 
         public async Task<WalkDto?> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin)
         {
-            var existingWalk = await walkRepository.GetWalkByIdAsync(id);
+            var existingWalk = await _walkRepository.GetWalkByIdAsync(id);
 
             if (existingWalk == null)
             {
                 return null;
+            }
+
+            var region = await _regionRepository.GetRegionByIdAsync(existingWalk.RegionId);
+            if (region == null)
+            {
+                throw new ArgumentException("The region associated with this walk no longer exists.");
             }
 
             if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
@@ -41,26 +64,26 @@ namespace NZWalks.API.Services
                 throw new UnauthorizedAccessException("You do not own this walk.");
             }
 
-            var deleted = await walkRepository.DeleteWalkAsync(id);
+            var deleted = await _walkRepository.DeleteWalkAsync(id);
 
-            return mapper.Map<WalkDto>(deleted);
+            return _mapper.Map<WalkDto>(deleted);
         }
 
         public async Task<List<WalkDto>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
         {
-            var walks = await walkRepository.GetAllWalksAsync(filterOn, filterQuery);
-            return mapper.Map<List<WalkDto>>(walks);
+            var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery);
+            return _mapper.Map<List<WalkDto>>(walks);
         }
 
         public async Task<WalkDto?> GetWalkByIdAsync(Guid id)
         {
-            var walk = await walkRepository.GetWalkByIdAsync(id);
-            return walk == null ? null : mapper.Map<WalkDto>(walk);
+            var walk = await _walkRepository.GetWalkByIdAsync(id);
+            return walk == null ? null : _mapper.Map<WalkDto>(walk);
         }
 
-        public async Task<WalkDto?> UpdateWalkAsync( Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
+        public async Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
         {
-            var existingWalk = await walkRepository.GetWalkByIdAsync(id);
+            var existingWalk = await _walkRepository.GetWalkByIdAsync(id);
 
             if (existingWalk == null)
             {
@@ -72,11 +95,19 @@ namespace NZWalks.API.Services
                 throw new UnauthorizedAccessException("You do not own this walk.");
             }
 
-            var walk = mapper.Map<Walk>(updateWalkDto);
+            var region = await _regionRepository.GetRegionByIdAsync(updateWalkDto.RegionId);
+            if (region == null)
+            {
+                throw new ArgumentException("Invalid region ID.");
+            }
 
-            var updated = await walkRepository.UpdateWalkAsync(id, walk);
+            var walkDomainModel = _mapper.Map<Walk>(updateWalkDto);
+            walkDomainModel.Region = region;
+            walkDomainModel.CreatedByUserId = existingWalk.CreatedByUserId;
 
-            return mapper.Map<WalkDto>(updated);
+            var updated = await _walkRepository.UpdateWalkAsync(id, walkDomainModel);
+
+            return _mapper.Map<WalkDto>(updated);
         }
     }
 }

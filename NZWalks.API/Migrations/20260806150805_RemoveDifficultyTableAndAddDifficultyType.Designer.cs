@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NZWalks.API.Data;
 
@@ -11,9 +12,11 @@ using NZWalks.API.Data;
 namespace NZWalks.API.Migrations
 {
     [DbContext(typeof(NZWalksDbContext))]
-    partial class NZWalksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260806150805_RemoveDifficultyTableAndAddDifficultyType")]
+    partial class RemoveDifficultyTableAndAddDifficultyType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -87,9 +90,8 @@ namespace NZWalks.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("DifficultyType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("DifficultyType")
+                        .HasColumnType("int");
 
                     b.Property<double>("LengthInKm")
                         .HasColumnType("float");

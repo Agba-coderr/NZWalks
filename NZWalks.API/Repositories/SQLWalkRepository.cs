@@ -1,4 +1,4 @@
-﻿using NZWalks.API.Data;
+using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +35,7 @@ namespace NZWalks.API.Repositories
 
         public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
         {
-            var walks = dbcontext.Walks.Include("Difficulty").Include("Region").AsQueryable();
+            var walks = dbcontext.Walks.Include("Region").AsQueryable();
             //Filtering
             if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
             {
@@ -46,14 +46,11 @@ namespace NZWalks.API.Repositories
             }
 
             return await walks.ToListAsync();
-
-            //Previous Implementation without filtering
-            //return await dbcontext.Walks.Include("Difficulty").Include("Region").ToListAsync(); //or x => x.Difficulty).Include(x => x.Region).ToListAsync();
         }
 
         public async Task<Walk?> GetWalkByIdAsync(Guid id)
         {
-            return await dbcontext.Walks.Include("Difficulty").Include("Region").FirstOrDefaultAsync(w => w.Id == id);
+            return await dbcontext.Walks.Include("Region").FirstOrDefaultAsync(w => w.Id == id);
         }
 
         public async Task<Walk?> UpdateWalkAsync(Guid id, Walk walk)
@@ -69,7 +66,7 @@ namespace NZWalks.API.Repositories
             exisitingWalk.Description = walk.Description;
             exisitingWalk.LengthInKm = walk.LengthInKm;
             exisitingWalk.WalkImageUrl = walk.WalkImageUrl;
-            exisitingWalk.DifficultyId = walk.DifficultyId;
+            exisitingWalk.DifficultyType = walk.DifficultyType;
             exisitingWalk.RegionId = walk.RegionId;
 
             await dbcontext.SaveChangesAsync();

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using NZWalks.API.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace NZWalks.API.Models.DTO
 {
@@ -19,7 +20,7 @@ namespace NZWalks.API.Models.DTO
         public string? WalkImageUrl { get; set; }
 
         [Required]
-        public Guid DifficultyId { get; set; }
+        public required DifficultyType DifficultyType { get; set; }
 
         [Required]
         public Guid RegionId { get; set; }

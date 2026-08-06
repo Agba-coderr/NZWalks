@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using NZWalks.API.Data;
 using NZWalks.API.Mappings;
 using NZWalks.API.Repositories;
 using NZWalks.API.Services;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.OpenApi;
-using Microsoft.Extensions.FileProviders;
 using Serilog;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,11 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+     .AddJsonOptions(options =>
+     {
+         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+     });
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddEndpointsApiExplorer();

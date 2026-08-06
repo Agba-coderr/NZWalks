@@ -10,7 +10,7 @@ namespace NZWalks.API.CustomActionFilters
         {
             // 1. Retrieve the DTO object from the action arguments
             var requestDto = context.ActionArguments.Values
-                .OfType<ImageUplaodRequestDto>()
+                .OfType<ImageUploadRequestDto>()
                 .FirstOrDefault();
 
             if (requestDto == null || requestDto.File == null)

@@ -6,28 +6,28 @@ namespace NZWalks.API.Services
 {
     public class AuthenticationService : IAuthenticationService
     {
-        private readonly UserManager<IdentityUser> userManager;
-        private readonly ITokenRepository tokenRepository;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly ITokenRepository _tokenRepository;
 
         public AuthenticationService(UserManager<IdentityUser> userManager, ITokenRepository tokenRepository)
         {
-            this.userManager = userManager;
-            this.tokenRepository = tokenRepository;
+            _userManager = userManager;
+            _tokenRepository = tokenRepository;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto)
         {
-            var user = await userManager.FindByEmailAsync(loginRequestDto.Username);
+            var user = await _userManager.FindByEmailAsync(loginRequestDto.Username);
 
             if (user != null)
             {
-                var checkPasswordResult = await userManager.CheckPasswordAsync(user, loginRequestDto.Password);
+                var checkPasswordResult = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
 
                 if (checkPasswordResult)
                 {
-                    var roles = await userManager.GetRolesAsync(user);
+                    var roles = await _userManager.GetRolesAsync(user);
 
-                    var jwtToken = tokenRepository.CreateJWTToken(user, roles.ToList());
+                    var jwtToken = _tokenRepository.CreateJWTToken(user, roles.ToList());
 
                     return new LoginResponseDto
                     {
@@ -50,14 +50,14 @@ namespace NZWalks.API.Services
                 Email = registerRequestDto.Username
             };
 
-            var identityResult = await userManager.CreateAsync(identityUser, registerRequestDto.Password);
+            var identityResult = await _userManager.CreateAsync(identityUser, registerRequestDto.Password);
 
             if (!identityResult.Succeeded)
                 return identityResult;
 
             // Public registration: default to Reader role. Do not allow callers to assign roles.
             var defaultRoles = new[] { "Reader" };
-            identityResult = await userManager.AddToRolesAsync(identityUser, defaultRoles);
+            identityResult = await _userManager.AddToRolesAsync(identityUser, defaultRoles);
 
             return identityResult;
         }

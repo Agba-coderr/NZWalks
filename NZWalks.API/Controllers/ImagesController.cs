@@ -25,7 +25,7 @@ namespace NZWalks.API.Controllers
         [HttpPost]
         [Route("Upload")]
         [ValidateFileUpload]
-        public async Task<IActionResult> Upload([FromForm] ImageUplaodRequestDto request)
+        public async Task<IActionResult> Upload([FromForm] ImageUploadRequestDto request)
         {
             // 1. Map DTO to Domain Model using AutoMapper
             var imageDomainModel = mapper.Map<Image>(request);

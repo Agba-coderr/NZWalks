@@ -1,4 +1,4 @@
-﻿using Microsoft.Identity.Client;
+using NZWalks.API.Models.Enums;
 
 namespace NZWalks.API.Models.DTO
 {
@@ -14,12 +14,10 @@ namespace NZWalks.API.Models.DTO
 
         public string? WalkImageUrl { get; set; }
 
-        public Guid DifficultyId { get; set; }
+        public required DifficultyType DifficultyType { get; set; }
 
         public Guid RegionId { get; set; }
 
         public required RegionDto Region { get; set; }
-
-        public required DifficultyDto Difficulty { get; set; }
     }
 }

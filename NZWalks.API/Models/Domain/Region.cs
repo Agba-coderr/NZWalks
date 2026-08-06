@@ -1,12 +1,10 @@
-﻿namespace NZWalks.API.Models.Domain
+namespace NZWalks.API.Models.Domain
 {
-    public class Region
+    public class Region : NamedEntity
     {
-        public Guid Id { get; set; }
+        // Inherits Id and Name from NamedEntity
 
         public required string Code { get; set; }
-
-        public required string Name { get; set; }
 
         public string? RegionImageUrl { get; set; }
     }
