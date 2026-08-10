@@ -78,6 +78,8 @@ builder.Services.AddScoped<IRegionService, RegionService>();
 
 builder.Services.AddScoped<IWalkService, WalkService>();
 
+builder.Services.AddTransient<IEmailService, EmailService>();
+
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 
 builder.Services.AddIdentityCore<IdentityUser>()
