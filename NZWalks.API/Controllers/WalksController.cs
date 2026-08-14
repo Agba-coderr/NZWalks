@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Models.DTO;
+using NZWalks.API.Models.Enums;
 using NZWalks.API.Services;
 using System.Security.Claims;
 
@@ -41,6 +42,75 @@ namespace NZWalks.API.Controllers
             return Ok(walkDto);
         }
 
+        [HttpGet]
+        [Route("user")]
+        [Authorize(Roles = "Reader,Writer")]
+        public async Task<IActionResult> GetWalksByUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var walksDto = await walkService.GetWalksByUserIdAsync(userId);
+
+            return Ok(walksDto);
+        }
+
+        [HttpGet]
+        [Route("user/longest")]
+        [Authorize(Roles = "Reader,Writer")]
+        public async Task<IActionResult> GetLongestWalkByUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            var longestWalkDto = await walkService.GetLongestWalkByUserId(userId);
+
+            if (longestWalkDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(longestWalkDto);
+        }
+
+        [HttpGet]
+        [Route("region/{regionId:Guid}")]
+        [Authorize(Roles = "Reader,Writer")]
+        public async Task<IActionResult> GetWalksByRegionId([FromRoute] Guid regionId)
+        {
+            var walksDto = await walkService.GetWalksByRegionIdAsync(regionId);
+
+            if (walksDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(walksDto);
+        }
+
+        [HttpGet]
+        [Route("difficulty")]
+        [Authorize(Roles = "Reader,Writer")]
+        public async Task<IActionResult> GetWalksByDifficulty(DifficultyType difficulty)
+        {
+            var walksDto = await walkService.GetWalksByDifficultyAsync(difficulty);
+
+            if (walksDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(walksDto);
+        }
+
         [HttpPost]
         [ValidateModel]
         [Authorize(Roles = "Writer")]
@@ -49,9 +119,10 @@ namespace NZWalks.API.Controllers
             // get the logged-in user id from token
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
+            {
                 return Unauthorized();
-
-            // update the service signature to accept createdByUserId (see note)
+            }
+            
             var walkDto = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
 
             return CreatedAtAction(nameof(GetWalkById), new { id = walkDto.Id }, walkDto);

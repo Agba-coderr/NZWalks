@@ -1,6 +1,7 @@
 using AutoMapper;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
+using NZWalks.API.Models.Enums;
 using NZWalks.API.Repositories;
 
 namespace NZWalks.API.Services
@@ -75,10 +76,43 @@ namespace NZWalks.API.Services
             return _mapper.Map<List<WalkDto>>(walks);
         }
 
+        public async Task<WalkDto?> GetLongestWalkByUserId(string userId)
+        {
+            var longestWalk = await _walkRepository.GetLongestWalkByUserId(userId);
+
+            if (longestWalk == null)
+            {
+                return null;
+            }
+
+            return _mapper.Map<WalkDto>(longestWalk);
+        }
+
         public async Task<WalkDto?> GetWalkByIdAsync(Guid id)
         {
             var walk = await _walkRepository.GetWalkByIdAsync(id);
             return walk == null ? null : _mapper.Map<WalkDto>(walk);
+        }
+
+        public async Task<List<WalkDto>> GetWalksByDifficultyAsync(DifficultyType difficulty)
+        {
+            var walks = await _walkRepository.GetWalksByDifficultyAsync(difficulty);
+
+            return _mapper.Map<List<WalkDto>>(walks);
+        }
+
+        public async Task<List<WalkDto>> GetWalksByRegionIdAsync(Guid regionId)
+        {
+            var walks = await _walkRepository.GetWalksByRegionIdAsync(regionId);
+
+            return _mapper.Map<List<WalkDto>>(walks);
+        }
+
+        public async Task<List<WalkDto>> GetWalksByUserIdAsync(string userId)
+        {
+            var walks = await _walkRepository.GetWalksByUserIdAsync(userId);
+
+            return _mapper.Map<List<WalkDto>>(walks);
         }
 
         public async Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)

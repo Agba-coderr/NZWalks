@@ -1,6 +1,8 @@
 using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using Microsoft.EntityFrameworkCore;
+using NZWalks.API.Models.DTO;
+using NZWalks.API.Models.Enums;
 
 
 namespace NZWalks.API.Repositories
@@ -53,6 +55,21 @@ namespace NZWalks.API.Repositories
             return await dbcontext.Walks.Include("Region").FirstOrDefaultAsync(w => w.Id == id);
         }
 
+        public async Task<List<Walk>> GetWalksByRegionIdAsync(Guid regionId)
+        {
+            return await dbcontext.Walks.Include("Region").Where(w => w.RegionId == regionId).ToListAsync();
+        }
+
+        public async Task<List<Walk>> GetWalksByUserIdAsync(string userId)
+        {
+            return await dbcontext.Walks.Include("Region").Where(w => w.CreatedByUserId == userId).ToListAsync();
+        }
+
+        public async Task<Walk?> GetLongestWalkByUserId(string userId)
+        {
+            return await dbcontext.Walks.Include("Region").Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
+        }
+
         public async Task<Walk?> UpdateWalkAsync(Guid id, Walk walk)
         {
             var exisitingWalk = await dbcontext.Walks.FindAsync(id);
@@ -71,6 +88,11 @@ namespace NZWalks.API.Repositories
 
             await dbcontext.SaveChangesAsync();
             return exisitingWalk;
+        }
+
+        public async Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty)
+        {
+            return await dbcontext.Walks.Include("Region").Where(w => w.DifficultyType == difficulty).ToListAsync();
         }
     }
 }
