@@ -1,10 +1,9 @@
-﻿using NZWalks.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
-using NZWalks.API.Repositories;
-using Microsoft.AspNetCore.Authorization;
+using NZWalks.API.Services;
 
 namespace NZWalks.API.Controllers
 {
@@ -24,7 +23,9 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> GetAllRegions()
         {
             var regionsDto = await regionService.GetAllRegionsAsync();
-            return Ok(regionsDto);
+            var response = Result.Success(regionsDto, "Regions retrieved successfully");
+
+            return StatusCode(response.Status, response);
         }
 
         [HttpGet]
@@ -36,10 +37,12 @@ namespace NZWalks.API.Controllers
 
             if (regionDto == null)
             {
-                return NotFound();
+                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
+                return StatusCode(notFoundResponse.Status, notFoundResponse);
             }
 
-            return Ok(regionDto);
+            var response = Result.Success(regionDto, "Region retrieved successfully");
+            return StatusCode(response.Status, response);
         }
 
         [HttpPost]
@@ -48,8 +51,9 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> CreateRegion([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
             var regionDto = await regionService.CreateRegionAsync(addRegionRequestDto);
+            var response = Result.Success(regionDto, "Region created successfully", 201);
 
-            return CreatedAtAction(nameof(GetRegionById), new { id = regionDto.Id }, regionDto);
+            return CreatedAtAction(nameof(GetRegionById), new { id = response.Data?.Id }, response);
         }
 
         [HttpPut]
@@ -62,10 +66,12 @@ namespace NZWalks.API.Controllers
 
             if (regionDto == null)
             {
-                return NotFound();
+                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
+                return StatusCode(notFoundResponse.Status, notFoundResponse);
             }
 
-            return Ok(regionDto);
+            var response = Result.Success(regionDto, "Region updated successfully");
+            return StatusCode(response.Status, response);
         }
 
         [HttpDelete]
@@ -77,12 +83,13 @@ namespace NZWalks.API.Controllers
 
             if (regionDto == null)
             {
-                return NotFound();
+                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
+                return StatusCode(notFoundResponse.Status, notFoundResponse);
             }
 
-            return Ok(regionDto);
-
+            var response = Result.Success(regionDto, "Region deleted successfully");
+            return StatusCode(response.Status, response);
         }
-
     }
 }
+

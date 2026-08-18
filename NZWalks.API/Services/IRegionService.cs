@@ -15,3 +15,4 @@ namespace NZWalks.API.Services
         Task<RegionDto?> DeleteRegionAsync(Guid id);
     }
 }
+

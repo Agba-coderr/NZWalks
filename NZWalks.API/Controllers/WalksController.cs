@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
+using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
 using NZWalks.API.Services;
@@ -23,8 +24,12 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery)
         {
+            
             var walksDto = await walkService.GetAllWalksAsync(filterOn, filterQuery);
-            return Ok(walksDto);
+
+            var response = Result.Success(walksDto, "Walks retrieved successfully");
+
+            return StatusCode(response.Status, response);
         }
 
         [HttpGet]
@@ -36,10 +41,14 @@ namespace NZWalks.API.Controllers
 
             if (walkDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure($"Walk with ID {id} was not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(walkDto);
+            var successResponse = Result.Success(walkDto, "Walk retrieved successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpGet]
@@ -51,12 +60,16 @@ namespace NZWalks.API.Controllers
 
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Unauthorized();
+                var failureResponse = Result.Failure("User is not authenticated", 401);
+                
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
             var walksDto = await walkService.GetWalksByUserIdAsync(userId);
 
-            return Ok(walksDto);
+            var successResponse = Result.Success(walksDto, "Walks retrieved successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpGet]
@@ -68,17 +81,23 @@ namespace NZWalks.API.Controllers
 
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Unauthorized();
+                var failureResponse = Result.Failure("User is not authenticated", 401);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
             var longestWalkDto = await walkService.GetLongestWalkByUserId(userId);
 
             if (longestWalkDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure($"Longest walk for user {userId} was not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(longestWalkDto);
+            var successResponse = Result.Success(longestWalkDto, "Longest walk retrieved successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpGet]
@@ -90,10 +109,14 @@ namespace NZWalks.API.Controllers
 
             if (walksDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure($"Walks for region {regionId} were not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(walksDto);
+            var successResponse = Result.Success(walksDto, "Walks retrieved successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpGet]
@@ -105,10 +128,14 @@ namespace NZWalks.API.Controllers
 
             if (walksDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure($"Walks with difficulty:{difficulty} were not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(walksDto);
+            var successResponse = Result.Success(walksDto, $"Walks with difficulty:{difficulty} retrieved successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpPost]
@@ -116,16 +143,19 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateWalk([FromBody] AddWalkRequestDto addWalkRequestDto)
         {
-            // get the logged-in user id from token
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Unauthorized();
+                var failureResponse = Result.Failure("User is not authenticated", 401);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
             
             var walkDto = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
 
-            return CreatedAtAction(nameof(GetWalkById), new { id = walkDto.Id }, walkDto);
+            var successResponse = Result.Success(walkDto, "Walk created successfully", 201);
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpPut]
@@ -137,7 +167,9 @@ namespace NZWalks.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Unauthorized();
+                var failureResponse = Result.Failure("User is not authenticated", 401);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
             var isAdmin = User.IsInRole("Admin");
@@ -146,10 +178,14 @@ namespace NZWalks.API.Controllers
 
             if (walkDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure("Walk not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(walkDto);
+            var successResponse = Result.Success(walkDto, "Walk updated successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
 
         [HttpDelete]
@@ -160,7 +196,9 @@ namespace NZWalks.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Unauthorized();
+                var failureResponse = Result.Failure("User is not authenticated", 401);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
             var isAdmin = User.IsInRole("Admin");
@@ -169,10 +207,14 @@ namespace NZWalks.API.Controllers
 
             if (walkDto == null)
             {
-                return NotFound();
+                var failureResponse = Result.Failure("Walk not found", 404);
+
+                return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            return Ok(walkDto);
+            var successResponse = Result.Success(walkDto, "Walk deleted successfully");
+
+            return StatusCode(successResponse.Status, successResponse);
         }
     }
 }

@@ -19,14 +19,14 @@ namespace NZWalks.API.Services
         public async Task<RegionDto> CreateRegionAsync(AddRegionRequestDto addRegionRequestDto)
         {
             var region = mapper.Map<Region>(addRegionRequestDto);
-            region = await regionRepository.CreateRegionAsync(region);
-            return mapper.Map<RegionDto>(region);
+            var createdRegion = await regionRepository.CreateRegionAsync(region);
+            return mapper.Map<RegionDto>(createdRegion);
         }
 
         public async Task<RegionDto?> DeleteRegionAsync(Guid id)
         {
-            var deleted = await regionRepository.DeleteRegionAsync(id);
-            return deleted == null ? null : mapper.Map<RegionDto>(deleted);
+            var deletedRegion = await regionRepository.DeleteRegionAsync(id);
+            return deletedRegion == null ? null : mapper.Map<RegionDto>(deletedRegion);
         }
 
         public async Task<List<RegionDto>> GetAllRegionsAsync()
@@ -44,8 +44,9 @@ namespace NZWalks.API.Services
         public async Task<RegionDto?> UpdateRegionAsync(Guid id, UpdateRegionDto updateRegionDto)
         {
             var region = mapper.Map<Region>(updateRegionDto);
-            var updated = await regionRepository.UpdateRegionAsync(id, region);
-            return updated == null ? null : mapper.Map<RegionDto>(updated);
+            var updatedRegion = await regionRepository.UpdateRegionAsync(id, region);
+            return updatedRegion == null ? null : mapper.Map<RegionDto>(updatedRegion);
         }
     }
 }
+
