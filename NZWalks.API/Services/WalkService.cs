@@ -86,7 +86,7 @@ namespace NZWalks.API.Services
 
         public async Task<Result> GetLongestWalkByUserIdAsync(string userId)
         {
-            var longestWalk = await _walkRepository.GetLongestWalkByUserId(userId);
+            var longestWalk = await _walkRepository.GetLongestWalkByUserIdAsync(userId);
 
             if (longestWalk == null)
             {
@@ -112,11 +112,6 @@ namespace NZWalks.API.Services
         {
             var walks = await _walkRepository.GetWalksByDifficultyAsync(difficulty);
 
-            if (walks.Count == 0)
-            {
-                return Result.Failure($"Walks with difficulty: {difficulty} were not found", 404);
-            }
-
             return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks with difficulty: {difficulty} retrieved successfully");
         }
 
@@ -124,22 +119,12 @@ namespace NZWalks.API.Services
         {
             var walks = await _walkRepository.GetWalksByRegionIdAsync(regionId);
 
-            if (walks.Count == 0)
-            {
-                return Result.Failure($"No walks found for the specified region: {regionId}", 404);
-            }
-
             return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the region: {regionId} retrieved successfully");
         }
 
         public async Task<Result> GetWalksByUserIdAsync(string userId)
         {
             var walks = await _walkRepository.GetWalksByUserIdAsync(userId);
-
-            if (walks.Count == 0)
-            {
-                return Result.Failure($"No walks found for the user: {userId}", 404);
-            }
 
             return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the user: {userId} retrieved successfully");
         }
@@ -172,7 +157,7 @@ namespace NZWalks.API.Services
 
             if (updated == null)
             {
-                return Result.Failure("Failed to update walk.", 404);
+                return Result.Failure($"Walk with ID {id} not found.", 404);
             }
 
             return Result.Success(_mapper.Map<WalkDto>(updated), "Walk updated successfully");

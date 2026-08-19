@@ -66,7 +66,7 @@ namespace NZWalks.API.Repositories
             return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).ToListAsync();
         }
 
-        public async Task<Walk?> GetLongestWalkByUserId(string userId)
+        public async Task<Walk?> GetLongestWalkByUserIdAsync(string userId)
         {
             return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
         }

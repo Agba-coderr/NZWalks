@@ -53,9 +53,25 @@ namespace NZWalks.API.Services
                     return Result.Failure(errors, 400);
                 }
 
-                // 3. Assign default 'Reader' role
-                var defaultRoles = new[] { "Reader" };
-                var roleResult = await _userManager.AddToRolesAsync(identityUser, defaultRoles);
+                // 3. Assign roles chosen by the user (require at least one)
+                var roles = registerRequestDto.Roles?
+                    .Where(r => !string.IsNullOrWhiteSpace(r))
+                    .ToArray();
+                if (roles == null || roles.Length == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Failure("At least one role is required.", 400);
+                }
+
+                // Prevent users from self-assigning Admin
+                var forbidden = new[] { "Admin" };
+                if (roles.Any(r => forbidden.Contains(r, StringComparer.OrdinalIgnoreCase)))
+                {
+                    await transaction.RollbackAsync();
+                    return Result.Failure("You cannot assign the Admin role.", 403);
+                }
+
+                var roleResult = await _userManager.AddToRolesAsync(identityUser, roles);
                 if (!roleResult.Succeeded)
                 {
                     await transaction.RollbackAsync();

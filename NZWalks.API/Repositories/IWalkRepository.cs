@@ -14,7 +14,7 @@ namespace NZWalks.API.Repositories
 
         Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty);
 
-        Task<Walk?> GetLongestWalkByUserId(string userId);
+        Task<Walk?> GetLongestWalkByUserIdAsync(string userId);
 
         Task<Walk?> GetWalkByIdAsync(Guid id);
 
