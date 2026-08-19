@@ -24,20 +24,20 @@ namespace NZWalks.API.Repositories
 
         public async Task<Walk?> DeleteWalkAsync(Guid id)
         {
-            var exisitngWalk = await dbcontext.Walks.FindAsync(id);
-            if (exisitngWalk == null)
+            var existingWalk = await dbcontext.Walks.FindAsync(id);
+            if (existingWalk == null)
             {
                 return null;
             }
 
-            dbcontext.Walks.Remove(exisitngWalk);
+            dbcontext.Walks.Remove(existingWalk);
             await dbcontext.SaveChangesAsync();
-            return exisitngWalk;
+            return existingWalk;
         }
 
         public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
         {
-            var walks = dbcontext.Walks.Include("Region").AsQueryable();
+            var walks = dbcontext.Walks.Include(w => w.Region).AsQueryable();
             //Filtering
             if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
             {
@@ -52,22 +52,23 @@ namespace NZWalks.API.Repositories
 
         public async Task<Walk?> GetWalkByIdAsync(Guid id)
         {
-            return await dbcontext.Walks.Include("Region").FirstOrDefaultAsync(w => w.Id == id);
+            return await dbcontext.Walks.Include(w => w.Region).FirstOrDefaultAsync(w => w.Id == id);
         }
 
         public async Task<List<Walk>> GetWalksByRegionIdAsync(Guid regionId)
         {
-            return await dbcontext.Walks.Include("Region").Where(w => w.RegionId == regionId).ToListAsync();
+            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.RegionId == regionId).ToListAsync();
+
         }
 
         public async Task<List<Walk>> GetWalksByUserIdAsync(string userId)
         {
-            return await dbcontext.Walks.Include("Region").Where(w => w.CreatedByUserId == userId).ToListAsync();
+            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).ToListAsync();
         }
 
         public async Task<Walk?> GetLongestWalkByUserId(string userId)
         {
-            return await dbcontext.Walks.Include("Region").Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
+            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
         }
 
         public async Task<Walk?> UpdateWalkAsync(Guid id, Walk walk)
@@ -92,7 +93,7 @@ namespace NZWalks.API.Repositories
 
         public async Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty)
         {
-            return await dbcontext.Walks.Include("Region").Where(w => w.DifficultyType == difficulty).ToListAsync();
+            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.DifficultyType == difficulty).ToListAsync();
         }
     }
 }

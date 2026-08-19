@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using NZWalks.API.Data;
-using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
 using System.Net;

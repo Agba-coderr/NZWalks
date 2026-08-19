@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 
 namespace NZWalks.API.Services

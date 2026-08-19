@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
-using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Services;
 
@@ -22,10 +22,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetAllRegions()
         {
-            var regionsDto = await regionService.GetAllRegionsAsync();
-            var response = Result.Success(regionsDto, "Regions retrieved successfully");
+            var results = await regionService.GetAllRegionsAsync();
 
-            return StatusCode(response.Status, response);
+            return StatusCode(results.Status, results);
         }
 
         [HttpGet]
@@ -33,16 +32,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetRegionById([FromRoute] Guid id)
         {
-            var regionDto = await regionService.GetRegionByIdAsync(id);
+            var result = await regionService.GetRegionByIdAsync(id);
 
-            if (regionDto == null)
-            {
-                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
-                return StatusCode(notFoundResponse.Status, notFoundResponse);
-            }
-
-            var response = Result.Success(regionDto, "Region retrieved successfully");
-            return StatusCode(response.Status, response);
+            return StatusCode(result.Status, result);
         }
 
         [HttpPost]
@@ -50,10 +42,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> CreateRegion([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
-            var regionDto = await regionService.CreateRegionAsync(addRegionRequestDto);
-            var response = Result.Success(regionDto, "Region created successfully", 201);
+            var result = await regionService.CreateRegionAsync(addRegionRequestDto);
 
-            return CreatedAtAction(nameof(GetRegionById), new { id = response.Data?.Id }, response);
+            return StatusCode(result.Status, result);
         }
 
         [HttpPut]
@@ -62,16 +53,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> UpdateRegion([FromRoute] Guid id, [FromBody] UpdateRegionDto updateRegionDto)
         {
-            var regionDto = await regionService.UpdateRegionAsync(id, updateRegionDto);
+            var result = await regionService.UpdateRegionAsync(id, updateRegionDto);
 
-            if (regionDto == null)
-            {
-                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
-                return StatusCode(notFoundResponse.Status, notFoundResponse);
-            }
-
-            var response = Result.Success(regionDto, "Region updated successfully");
-            return StatusCode(response.Status, response);
+            return StatusCode(result.Status, result);
         }
 
         [HttpDelete]
@@ -79,16 +63,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> DeleteRegion([FromRoute] Guid id)
         {
-            var regionDto = await regionService.DeleteRegionAsync(id);
+            var result = await regionService.DeleteRegionAsync(id);
 
-            if (regionDto == null)
-            {
-                var notFoundResponse = Result.Failure($"Region with ID {id} was not found", 404);
-                return StatusCode(notFoundResponse.Status, notFoundResponse);
-            }
-
-            var response = Result.Success(regionDto, "Region deleted successfully");
-            return StatusCode(response.Status, response);
+            return StatusCode(result.Status, result);
         }
     }
 }

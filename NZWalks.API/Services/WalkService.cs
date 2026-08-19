@@ -1,4 +1,5 @@
 using AutoMapper;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
@@ -25,7 +26,7 @@ namespace NZWalks.API.Services
 
             if (region == null)
             {
-                return Result.Failure($"Region ID {addWalkRequestDto.RegionId} does not exist");
+                return Result.Failure($"Region ID {addWalkRequestDto.RegionId} does not exist", 404);
 
             }
 
@@ -43,7 +44,7 @@ namespace NZWalks.API.Services
 
             walk = await _walkRepository.CreateWalkAsync(walk);
 
-            return Result.Success(_mapper.Map<WalkDto>(walk), "Walk created successfully");
+            return Result.Success(_mapper.Map<WalkDto>(walk), $"Walk created successfully.");
         }
 
         public async Task<Result> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin)
@@ -55,11 +56,11 @@ namespace NZWalks.API.Services
                 return Result.Failure("This walk does not exist.", 404);
             }
 
-            var region = await _regionRepository.GetRegionByIdAsync(existingWalk.RegionId);
-            if (region == null)
-            {
-                return Result.Failure("The region associated with this walk no longer exists.", 400);
-            }
+            //var region = await _regionRepository.GetRegionByIdAsync(existingWalk.RegionId);
+            //if (region == null)
+            //{
+            //    return Result.Failure("The region associated with this walk no longer exists.", 400);
+            //}
 
             if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
             {
@@ -68,52 +69,79 @@ namespace NZWalks.API.Services
 
             var deleted = await _walkRepository.DeleteWalkAsync(id);
 
+            if (deleted == null)
+            {
+                return Result.Failure("This walk no longer exists.", 404);
+            }
+
             return Result.Success(_mapper.Map<WalkDto>(deleted), "Walk deleted successfully");
         }
 
-        public async Task<List<WalkDto>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
+        public async Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
         {
             var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery);
-            return _mapper.Map<List<WalkDto>>(walks);
+
+            return Result.Success(_mapper.Map<List<WalkDto>>(walks), "Walks retrieved successfully");
         }
 
-        public async Task<WalkDto?> GetLongestWalkByUserId(string userId)
+        public async Task<Result> GetLongestWalkByUserIdAsync(string userId)
         {
             var longestWalk = await _walkRepository.GetLongestWalkByUserId(userId);
 
             if (longestWalk == null)
             {
-                return null;
+                return Result.Failure($"Longest walk not found for user: {userId}", 404);
             }
 
-            return _mapper.Map<WalkDto>(longestWalk);
+            return Result.Success(_mapper.Map<WalkDto>(longestWalk), $"Longest walk for user: {userId} retrieved successfully");
         }
 
-        public async Task<WalkDto?> GetWalkByIdAsync(Guid id)
+        public async Task<Result> GetWalkByIdAsync(Guid id)
         {
             var walk = await _walkRepository.GetWalkByIdAsync(id);
-            return walk == null ? null : _mapper.Map<WalkDto>(walk);
+
+            if (walk == null)
+            {
+                return Result.Failure($"Walk with ID {id} not found.", 404);
+            }
+
+            return Result.Success(_mapper.Map<WalkDto>(walk), $"Walk with ID {id} retrieved successfully");
         }
 
-        public async Task<List<WalkDto>> GetWalksByDifficultyAsync(DifficultyType difficulty)
+        public async Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty)
         {
             var walks = await _walkRepository.GetWalksByDifficultyAsync(difficulty);
 
-            return _mapper.Map<List<WalkDto>>(walks);
+            if (walks.Count == 0)
+            {
+                return Result.Failure($"Walks with difficulty: {difficulty} were not found", 404);
+            }
+
+            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks with difficulty: {difficulty} retrieved successfully");
         }
 
-        public async Task<List<WalkDto>> GetWalksByRegionIdAsync(Guid regionId)
+        public async Task<Result> GetWalksByRegionIdAsync(Guid regionId)
         {
             var walks = await _walkRepository.GetWalksByRegionIdAsync(regionId);
 
-            return _mapper.Map<List<WalkDto>>(walks);
+            if (walks.Count == 0)
+            {
+                return Result.Failure($"No walks found for the specified region: {regionId}", 404);
+            }
+
+            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the region: {regionId} retrieved successfully");
         }
 
-        public async Task<List<WalkDto>> GetWalksByUserIdAsync(string userId)
+        public async Task<Result> GetWalksByUserIdAsync(string userId)
         {
             var walks = await _walkRepository.GetWalksByUserIdAsync(userId);
 
-            return _mapper.Map<List<WalkDto>>(walks);
+            if (walks.Count == 0)
+            {
+                return Result.Failure($"No walks found for the user: {userId}", 404);
+            }
+
+            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the user: {userId} retrieved successfully");
         }
 
         public async Task<Result> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
@@ -133,7 +161,7 @@ namespace NZWalks.API.Services
             var region = await _regionRepository.GetRegionByIdAsync(updateWalkDto.RegionId);
             if (region == null)
             {
-                return Result.Failure("Invalid region ID.", 400);
+                return Result.Failure("Invalid region ID.", 404);
             }
 
             var walkDomainModel = _mapper.Map<Walk>(updateWalkDto);
@@ -141,6 +169,11 @@ namespace NZWalks.API.Services
             walkDomainModel.CreatedByUserId = existingWalk.CreatedByUserId;
 
             var updated = await _walkRepository.UpdateWalkAsync(id, walkDomainModel);
+
+            if (updated == null)
+            {
+                return Result.Failure("Failed to update walk.", 404);
+            }
 
             return Result.Success(_mapper.Map<WalkDto>(updated), "Walk updated successfully");
         }

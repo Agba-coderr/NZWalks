@@ -1,4 +1,4 @@
-using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
 
@@ -6,17 +6,17 @@ namespace NZWalks.API.Services
 {
     public interface IWalkService
     {
-        Task<List<WalkDto>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null);
+        Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null);
 
-        Task<List<WalkDto>> GetWalksByUserIdAsync(string userId);
+        Task<Result> GetWalksByUserIdAsync(string userId);
 
-        Task<List<WalkDto>> GetWalksByRegionIdAsync(Guid regionId);
+        Task<Result> GetWalksByRegionIdAsync(Guid regionId);
 
-        Task<List<WalkDto>> GetWalksByDifficultyAsync(DifficultyType difficulty);
+        Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty);
 
-        Task<WalkDto?> GetLongestWalkByUserId(string userId);
+        Task<Result> GetLongestWalkByUserIdAsync(string userId);
 
-        Task<WalkDto?> GetWalkByIdAsync(Guid id);
+        Task<Result> GetWalkByIdAsync(Guid id);
 
         Task<Result> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId);
 

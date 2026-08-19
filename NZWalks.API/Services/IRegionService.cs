@@ -1,18 +1,19 @@
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 
 namespace NZWalks.API.Services
 {
     public interface IRegionService
     {
-        Task<List<RegionDto>> GetAllRegionsAsync();
+        Task<Result> GetAllRegionsAsync();
 
-        Task<RegionDto?> GetRegionByIdAsync(Guid id);
+        Task<Result> GetRegionByIdAsync(Guid id);
 
-        Task<RegionDto> CreateRegionAsync(AddRegionRequestDto addRegionRequestDto);
+        Task<Result> CreateRegionAsync(AddRegionRequestDto addRegionRequestDto);
 
-        Task<RegionDto?> UpdateRegionAsync(Guid id, UpdateRegionDto updateRegionDto);
+        Task<Result> UpdateRegionAsync(Guid id, UpdateRegionDto updateRegionDto);
 
-        Task<RegionDto?> DeleteRegionAsync(Guid id);
+        Task<Result> DeleteRegionAsync(Guid id);
     }
 }
 

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
-using NZWalks.API.Models.Domain;
+using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
 using NZWalks.API.Services;
@@ -26,11 +26,9 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery)
         {
             
-            var walksDto = await walkService.GetAllWalksAsync(filterOn, filterQuery);
+            var result = await walkService.GetAllWalksAsync(filterOn, filterQuery);
 
-            var response = Result.Success(walksDto, "Walks retrieved successfully");
-
-            return StatusCode(response.Status, response);
+            return StatusCode(result.Status, result);
         }
 
         [HttpGet]
@@ -38,18 +36,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetWalkById([FromRoute] Guid id)
         {
-            var walkDto = await walkService.GetWalkByIdAsync(id);
+            var result = await walkService.GetWalkByIdAsync(id);
 
-            if (walkDto == null)
-            {
-                var failureResponse = Result.Failure($"Walk with ID {id} was not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(walkDto, "Walk retrieved successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpGet]
@@ -66,11 +55,9 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            var walksDto = await walkService.GetWalksByUserIdAsync(userId);
+            var result = await walkService.GetWalksByUserIdAsync(userId);
 
-            var successResponse = Result.Success(walksDto, "Walks retrieved successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpGet]
@@ -87,18 +74,9 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            var longestWalkDto = await walkService.GetLongestWalkByUserId(userId);
+            var result = await walkService.GetLongestWalkByUserIdAsync(userId);
 
-            if (longestWalkDto == null)
-            {
-                var failureResponse = Result.Failure($"Longest walk for user {userId} was not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(longestWalkDto, "Longest walk retrieved successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpGet]
@@ -106,18 +84,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetWalksByRegionId([FromRoute] Guid regionId)
         {
-            var walksDto = await walkService.GetWalksByRegionIdAsync(regionId);
+            var result = await walkService.GetWalksByRegionIdAsync(regionId);
 
-            if (walksDto == null)
-            {
-                var failureResponse = Result.Failure($"Walks for region {regionId} were not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(walksDto, "Walks retrieved successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpGet]
@@ -125,18 +94,9 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetWalksByDifficulty(DifficultyType difficulty)
         {
-            var walksDto = await walkService.GetWalksByDifficultyAsync(difficulty);
+            var result = await walkService.GetWalksByDifficultyAsync(difficulty);
 
-            if (walksDto == null)
-            {
-                var failureResponse = Result.Failure($"Walks with difficulty:{difficulty} were not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(walksDto, $"Walks with difficulty:{difficulty} retrieved successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpPost]
