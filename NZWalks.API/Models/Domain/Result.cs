@@ -1,6 +1,6 @@
 namespace NZWalks.API.Models.Domain
 {
-    public class Result
+    public class Result 
     {
         public bool IsSuccess { get; set; }
 

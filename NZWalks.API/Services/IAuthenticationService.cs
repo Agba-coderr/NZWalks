@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 
 namespace NZWalks.API.Services
@@ -6,8 +7,12 @@ namespace NZWalks.API.Services
     public interface IAuthenticationService
     {
         // Return IdentityResult so callers can surface specific Identity errors
-        Task<IdentityResult> RegisterAsync(RegisterRequestDto registerRequestDto);
+        Task<Result> RegisterAsync(RegisterRequestDto registerRequestDto);
 
-        Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto);
+        Task<Result> VerifyEmailAsync(string userId, string token);
+
+        Task<Result> LoginAsync(LoginRequestDto loginRequestDto);
+
+        Task<Result> ResendVerificationEmailAsync(string email);
     }
 }

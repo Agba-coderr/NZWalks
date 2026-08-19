@@ -19,13 +19,14 @@ namespace NZWalks.API.Services
             _regionRepository = regionRepository;
         }
 
-        public async Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId)
+        public async Task<Result> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId)
         {
             var region = await _regionRepository.GetRegionByIdAsync(addWalkRequestDto.RegionId);
 
             if (region == null)
             {
-                throw new ArgumentException("Invalid region ID.");
+                return Result.Failure($"Region ID {addWalkRequestDto.RegionId} does not exist");
+
             }
 
             var walk = new Walk
@@ -42,32 +43,32 @@ namespace NZWalks.API.Services
 
             walk = await _walkRepository.CreateWalkAsync(walk);
 
-            return _mapper.Map<WalkDto>(walk);
+            return Result.Success(_mapper.Map<WalkDto>(walk), "Walk created successfully");
         }
 
-        public async Task<WalkDto?> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin)
+        public async Task<Result> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin)
         {
             var existingWalk = await _walkRepository.GetWalkByIdAsync(id);
 
             if (existingWalk == null)
             {
-                return null;
+                return Result.Failure("This walk does not exist.", 404);
             }
 
             var region = await _regionRepository.GetRegionByIdAsync(existingWalk.RegionId);
             if (region == null)
             {
-                throw new ArgumentException("The region associated with this walk no longer exists.");
+                return Result.Failure("The region associated with this walk no longer exists.", 400);
             }
 
             if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
             {
-                throw new UnauthorizedAccessException("You do not own this walk.");
+                return Result.Failure("You do not own this walk.", 403);
             }
 
             var deleted = await _walkRepository.DeleteWalkAsync(id);
 
-            return _mapper.Map<WalkDto>(deleted);
+            return Result.Success(_mapper.Map<WalkDto>(deleted), "Walk deleted successfully");
         }
 
         public async Task<List<WalkDto>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
@@ -115,24 +116,24 @@ namespace NZWalks.API.Services
             return _mapper.Map<List<WalkDto>>(walks);
         }
 
-        public async Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
+        public async Task<Result> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)
         {
             var existingWalk = await _walkRepository.GetWalkByIdAsync(id);
 
             if (existingWalk == null)
             {
-                return null;
+                return Result.Failure("This walk does not exist.", 404);
             }
 
             if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
             {
-                throw new UnauthorizedAccessException("You do not own this walk.");
+                return Result.Failure("You do not own this walk.", 403);
             }
 
             var region = await _regionRepository.GetRegionByIdAsync(updateWalkDto.RegionId);
             if (region == null)
             {
-                throw new ArgumentException("Invalid region ID.");
+                return Result.Failure("Invalid region ID.", 400);
             }
 
             var walkDomainModel = _mapper.Map<Walk>(updateWalkDto);
@@ -141,7 +142,7 @@ namespace NZWalks.API.Services
 
             var updated = await _walkRepository.UpdateWalkAsync(id, walkDomainModel);
 
-            return _mapper.Map<WalkDto>(updated);
+            return Result.Success(_mapper.Map<WalkDto>(updated), "Walk updated successfully");
         }
     }
 }

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+using NZWalks.API.Data;
+using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
+using System.Net;
 
 namespace NZWalks.API.Services
 {
@@ -9,83 +12,229 @@ namespace NZWalks.API.Services
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ITokenRepository _tokenRepository;
         private readonly IEmailService _emailService;
+        private readonly NZWalksAuthDbContext _nZWalksAuthDbContext;
+        private readonly ILogger<AuthenticationService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthenticationService(UserManager<IdentityUser> userManager, ITokenRepository tokenRepository, IEmailService emailService)
+        public AuthenticationService(
+            UserManager<IdentityUser> userManager,
+            ITokenRepository tokenRepository,
+            IEmailService emailService,
+            NZWalksAuthDbContext nZWalksAuthDbContext,
+            ILogger<AuthenticationService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _tokenRepository = tokenRepository;
             _emailService = emailService;
+            _nZWalksAuthDbContext = nZWalksAuthDbContext;
+            _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginRequestDto)
+        public async Task<Result> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginRequestDto.Username);
+            // 1. Begin Database Transaction
+            using var transaction = await _nZWalksAuthDbContext.Database.BeginTransactionAsync();
 
-            if (user != null)
+            try
             {
-                var checkPasswordResult = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
-
-                if (checkPasswordResult)
+                var identityUser = new IdentityUser
                 {
-                    var roles = await _userManager.GetRolesAsync(user);
+                    UserName = registerRequestDto.Username,
+                    Email = registerRequestDto.Username
+                };
 
-                    var jwtToken = _tokenRepository.CreateJWTToken(user, roles.ToList());
-
-                    await _emailService.SendEmailAsync(
-                        toEmail: user.Email!,
-                        subject: "New Login to Your NZ Walks Account",
-                        body: $@"
-                            <p>Hi <b>{user.UserName}</b>,</p>
-                            <p>We noticed a new login to your NZ Walks account.</p>
-                            <p>If this was you, no action is required.</p>
-                            <p>If you did not make this login, please secure your account by changing your password and reviewing your account activity.</p>
-                            <br/>
-                            <p>Best regards,<br/><b>The NZ Walks Team</b></p>"
-                    );
-
-                    return new LoginResponseDto
-                    {
-                        Token = jwtToken,
-                        UserId = user.Id,
-                        Roles = roles.ToList()
-                    };
+                // 2. Create the user in Identity (EmailConfirmed is false by default)
+                var createResult = await _userManager.CreateAsync(identityUser, registerRequestDto.Password);
+                if (!createResult.Succeeded)
+                {
+                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    return Result.Failure(errors, 400);
                 }
+
+                // 3. Assign default 'Reader' role
+                var defaultRoles = new[] { "Reader" };
+                var roleResult = await _userManager.AddToRolesAsync(identityUser, defaultRoles);
+                if (!roleResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    return Result.Failure(errors, 400);
+                }
+
+                // 4. Generate email verification token and build dynamic link
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+                var encodedToken = WebUtility.UrlEncode(token);
+
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var baseUrl = $"{request?.Scheme}://{request?.Host}";
+                var confirmationLink = $"{baseUrl}/api/Auth/VerifyEmail?userId={identityUser.Id}&token={encodedToken}";
+
+                // 5. Send Verification Email
+                var emailBody = $@"
+                    <p>Hi <b>{identityUser.UserName}</b>,</p>
+                    <p>Welcome to NZ Walks! Please confirm your email address by clicking the link below:</p>
+                    <p><a href='{confirmationLink}' style='padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;'>Verify My Email</a></p>
+                    <br/>
+                    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p>{confirmationLink}</p>
+                    <br/>
+                    <p>Best regards,<br/><b>The NZ Walks Team</b></p>";
+
+                await _emailService.SendEmailAsync(
+                    toEmail: identityUser.Email,
+                    subject: "Verify Your Email - NZ Walks",
+                    body: emailBody
+                );
+
+                // 6. Commit transaction ONLY after email is sent successfully
+                await transaction.CommitAsync();
+
+                return Result.Success(null, "Registration successful! Please check your email to verify your account.", 201);
+            }
+            catch (Exception ex)
+            {
+                // Rollback database changes if email sending fails or unexpected exception occurs
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Registration failed during email sending for {Email}", registerRequestDto.Username);
+
+                return Result.Failure(
+                    "We were unable to send your verification email. Registration could not be completed. Please try again in a few moments.",
+                    500
+                );
+            }
+        }
+
+        public async Task<Result> VerifyEmailAsync(string userId, string token)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+            {
+                return Result.Failure("Invalid verification link parameters.", 400);
             }
 
-            return null;
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Result.Failure("User not found.", 404);
+            }
+
+            if (user.EmailConfirmed)
+            {
+                return Result.Success(null, "Email is already verified. You can log in.", 200);
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Result.Failure($"Email verification failed: {errors}", 400);
+            }
+
+            return Result.Success(null, "Email verified successfully! You can now log in.", 200);
         }
 
-        // Return IdentityResult so controller can return specific errors to client
-        public async Task<IdentityResult> RegisterAsync(RegisterRequestDto registerRequestDto)
+        public async Task<Result> LoginAsync(LoginRequestDto loginRequestDto)
         {
-            var identityUser = new IdentityUser
+            var user = await _userManager.FindByEmailAsync(loginRequestDto.Username);
+            if (user == null)
             {
-                UserName = registerRequestDto.Username,
-                Email = registerRequestDto.Username
+                return Result.Failure("Username or password incorrect", 400);
+            }
+
+            var checkPasswordResult = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
+            if (!checkPasswordResult)
+            {
+                return Result.Failure("Username or password incorrect", 400);
+            }
+
+            // Block login if email is not verified yet
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return Result.Failure("Please verify your email address before logging in.", 401);
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var jwtToken = _tokenRepository.CreateJWTToken(user, roles.ToList());
+
+            // Optional: send login notification email safely (non-blocking)
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    toEmail: user.Email!,
+                    subject: "New Login to Your NZ Walks Account",
+                    body: $@"
+                        <p>Hi <b>{user.UserName}</b>,</p>
+                        <p>We noticed a new login to your NZ Walks account.</p>
+                        <p>If this was you, no action is required.</p>
+                        <p>If not, please secure your account immediately.</p>
+                        <br/>
+                        <p>Best regards,<br/><b>The NZ Walks Team</b></p>"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not send login notification email to {Email}", user.Email);
+            }
+
+            var loginResponse = new LoginResponseDto
+            {
+                Token = jwtToken,
+                UserId = user.Id,
+                Roles = roles.ToList()
             };
 
-            var identityResult = await _userManager.CreateAsync(identityUser, registerRequestDto.Password);
+            return Result.Success(loginResponse, "Login successful", 200);
+        }
 
-            if (!identityResult.Succeeded)
-                return identityResult;
-
-            await _emailService.SendEmailAsync(
-                toEmail: identityUser.Email,
-                subject: "Welcome to NZ Walks!",
-                body: $@"
-                    <p>Hi <b>{identityUser.UserName}</b>,</p>
-                    <p>Welcome to NZ Walks!</p>
-                    <p>Your account has been successfully created, and you’re all set to start discovering some of New Zealand’s beautiful walks and trails.</p>
-                    <p>Happy exploring!</p>
+        public async Task<Result> ResendVerificationEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Result.Failure("Email is required.", 400);
+            }
+            // 1. Find user by email
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return Result.Failure("User with this email does not exist.", 404);
+            }
+            // 2. Check if already verified
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return Result.Failure("This email is already verified. Please log in.", 400);
+            }
+            try
+            {
+                // 3. Generate a new verification token & build the link
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedToken = WebUtility.UrlEncode(token);
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var baseUrl = $"{request?.Scheme}://{request?.Host}";
+                var confirmationLink = $"{baseUrl}/api/Auth/VerifyEmail?userId={user.Id}&token={encodedToken}";
+                var emailBody = $@"
+                    <p>Hi <b>{user.UserName}</b>,</p>
+                    <p>You requested a new verification link for NZ Walks. Please confirm your email address by clicking the link below:</p>
+                    <p><a href='{confirmationLink}' style='padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;'>Verify My Email</a></p>
                     <br/>
-                    <p>Best regards,<br/><b>The NZ Walks Team</b></p>"
-            );
+                    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p>{confirmationLink}</p>
+                    <br/>
+                    <p>Best regards,<br/><b>The NZ Walks Team</b></p>";
 
-            // Public registration: default to Reader role. Do not allow callers to assign roles.
-            var defaultRoles = new[] { "Reader" };
-            identityResult = await _userManager.AddToRolesAsync(identityUser, defaultRoles);
-
-            return identityResult;
+                // 4. Send the email
+                await _emailService.SendEmailAsync(
+                    toEmail: user.Email!,
+                    subject: "Resend Email Verification - NZ Walks",
+                    body: emailBody
+                );
+                return Result.Success(null, "A new verification email has been sent. Please check your inbox.", 200);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend verification email to {Email}", email);
+                return Result.Failure("Unable to send verification email. Please try again in a few moments.", 500);
+            }
         }
     }
 }

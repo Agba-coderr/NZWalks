@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure;
+using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Services;
 
@@ -20,15 +21,19 @@ namespace NZWalks.API.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
         {
-            var result = await authenticationService.RegisterAsync(registerRequestDto);
+            var response = await authenticationService.RegisterAsync(registerRequestDto);
 
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description);
-                return BadRequest(new { Errors = errors });
-            }
+            return StatusCode(response.Status, response);
+        }
 
-            return Ok("User was registered! Please login");
+        // GET: /api/Auth/VerifyEmail?userId=...&token=...
+        [HttpGet]
+        [Route("VerifyEmail")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            var response = await authenticationService.VerifyEmailAsync(userId, token);
+
+            return StatusCode(response.Status, response);
         }
 
         //POST: /api/Auth/Login
@@ -36,14 +41,18 @@ namespace NZWalks.API.Controllers
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
         {
-            var loginResponse = await authenticationService.LoginAsync(loginRequestDto);
+            var response = await authenticationService.LoginAsync(loginRequestDto);
 
-            if (loginResponse == null)
-            {
-                return BadRequest("Username or password incorrect");
-            }
+            return StatusCode(response.Status, response);
+        }
 
-            return Ok(loginResponse);
+        // POST: /api/Auth/ResendVerificationEmail
+        [HttpPost]
+        [Route("ResendVerificationEmail")]
+        public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendVerificationEmailRequestDto requestDto)
+        {
+            var response = await authenticationService.ResendVerificationEmailAsync(requestDto.Email);
+            return StatusCode(response.Status, response);
         }
     }
 }

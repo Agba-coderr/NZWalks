@@ -1,4 +1,5 @@
-﻿using System.Net;
+using Serilog;
+using System.Net;
 using System.Net.Mail;
 
 namespace NZWalks.API.Services
@@ -6,10 +7,12 @@ namespace NZWalks.API.Services
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<EmailService> _logger;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
@@ -35,7 +38,17 @@ namespace NZWalks.API.Services
 
             mailMessage.To.Add(toEmail);
 
-            await smtpClient.SendMailAsync(mailMessage);
+            try
+            {
+                _logger.LogInformation("About to send email");
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("Email sent");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
+                throw;
+            }
         }
     }
 }

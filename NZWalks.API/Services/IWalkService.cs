@@ -1,3 +1,4 @@
+using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
 
@@ -17,10 +18,10 @@ namespace NZWalks.API.Services
 
         Task<WalkDto?> GetWalkByIdAsync(Guid id);
 
-        Task<WalkDto> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId);
+        Task<Result> CreateWalkAsync(AddWalkRequestDto addWalkRequestDto, string createdByUserId);
 
-        Task<WalkDto?> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin);
+        Task<Result> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin);
 
-        Task<WalkDto?> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin);
+        Task<Result> DeleteWalkAsync(Guid id, string currentUserId, bool isAdmin);
     }
 }

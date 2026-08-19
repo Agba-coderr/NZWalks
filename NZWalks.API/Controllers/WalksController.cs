@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Models.Domain;
@@ -151,11 +152,9 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
             
-            var walkDto = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
+            var result = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
 
-            var successResponse = Result.Success(walkDto, "Walk created successfully", 201);
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpPut]
@@ -174,18 +173,9 @@ namespace NZWalks.API.Controllers
 
             var isAdmin = User.IsInRole("Admin");
 
-            var walkDto = await walkService.UpdateWalkAsync(id, updateWalkDto, userId, isAdmin);
+            var result = await walkService.UpdateWalkAsync(id, updateWalkDto, userId, isAdmin);
 
-            if (walkDto == null)
-            {
-                var failureResponse = Result.Failure("Walk not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(walkDto, "Walk updated successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
 
         [HttpDelete]
@@ -203,18 +193,9 @@ namespace NZWalks.API.Controllers
 
             var isAdmin = User.IsInRole("Admin");
 
-            var walkDto = await walkService.DeleteWalkAsync(id, userId, isAdmin);
+            var result = await walkService.DeleteWalkAsync(id, userId, isAdmin);
 
-            if (walkDto == null)
-            {
-                var failureResponse = Result.Failure("Walk not found", 404);
-
-                return StatusCode(failureResponse.Status, failureResponse);
-            }
-
-            var successResponse = Result.Success(walkDto, "Walk deleted successfully");
-
-            return StatusCode(successResponse.Status, successResponse);
+            return StatusCode(result.Status, result);
         }
     }
 }
