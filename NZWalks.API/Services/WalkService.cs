@@ -138,7 +138,7 @@ namespace NZWalks.API.Services
                 return Result.Failure("This walk does not exist.", 404);
             }
 
-            if (!isAdmin && existingWalk.CreatedByUserId != currentUserId)
+            if (existingWalk.CreatedByUserId != currentUserId)
             {
                 return Result.Failure("You do not own this walk.", 403);
             }

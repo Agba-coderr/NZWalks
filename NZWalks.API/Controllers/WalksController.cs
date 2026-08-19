@@ -22,7 +22,7 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery)
         {
             
@@ -33,7 +33,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("{id:Guid}")]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetWalkById([FromRoute] Guid id)
         {
             var result = await walkService.GetWalkByIdAsync(id);
@@ -43,7 +43,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("user")]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Writer,Admin")]
         public async Task<IActionResult> GetWalksByUserId()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -62,7 +62,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("user/longest")]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Writer,Admin")]
         public async Task<IActionResult> GetLongestWalkByUserId()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -81,7 +81,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("region/{regionId:Guid}")]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetWalksByRegionId([FromRoute] Guid regionId)
         {
             var result = await walkService.GetWalksByRegionIdAsync(regionId);
@@ -91,7 +91,7 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Route("difficulty")]
-        [Authorize(Roles = "Reader,Writer")]
+        [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetWalksByDifficulty(DifficultyType difficulty)
         {
             var result = await walkService.GetWalksByDifficultyAsync(difficulty);
@@ -101,7 +101,7 @@ namespace NZWalks.API.Controllers
 
         [HttpPost]
         [ValidateModel]
-        [Authorize(Roles = "Writer")]
+        [Authorize(Roles = "Writer,Admin")]
         public async Task<IActionResult> CreateWalk([FromBody] AddWalkRequestDto addWalkRequestDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -120,7 +120,7 @@ namespace NZWalks.API.Controllers
         [HttpPut]
         [Route("{id:Guid}")]
         [ValidateModel]
-        [Authorize(Roles = "Writer")]
+        [Authorize(Roles = "Writer,Admin")]
         public async Task<IActionResult> UpdateWalk([FromRoute] Guid id, [FromBody] UpdateWalkDto updateWalkDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -140,7 +140,7 @@ namespace NZWalks.API.Controllers
 
         [HttpDelete]
         [Route("{id:Guid}")]
-        [Authorize(Roles = "Writer")]
+        [Authorize(Roles = "Writer,Admin")]
         public async Task<IActionResult> DeleteWalk(Guid id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
