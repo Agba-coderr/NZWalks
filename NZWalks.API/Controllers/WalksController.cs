@@ -5,6 +5,7 @@ using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Models.Common;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
+using NZWalks.API.Repositories;
 using NZWalks.API.Services;
 using System.Security.Claims;
 
@@ -23,10 +24,10 @@ namespace NZWalks.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Reader,Writer,Admin")]
-        public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery)
+        public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             
-            var result = await walkService.GetAllWalksAsync(filterOn, filterQuery);
+            var result = await walkService.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
 
             return StatusCode(result.Status, result);
         }

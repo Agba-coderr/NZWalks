@@ -35,7 +35,7 @@ namespace NZWalks.API.Repositories
             return existingWalk;
         }
 
-        public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
+        public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10)
         {
             var walks = dbcontext.Walks.Include(w => w.Region).AsQueryable();
             //Filtering
@@ -46,8 +46,10 @@ namespace NZWalks.API.Repositories
                     walks = walks.Where(x => x.Name.Contains(filterQuery));
                 }
             }
+            //Pagination
+            var skipResults = (pageNumber - 1) * pageSize;
 
-            return await walks.ToListAsync();
+            return await walks.Skip(skipResults).Take(pageSize).ToListAsync();
         }
 
         public async Task<Walk?> GetWalkByIdAsync(Guid id)
@@ -58,7 +60,6 @@ namespace NZWalks.API.Repositories
         public async Task<List<Walk>> GetWalksByRegionIdAsync(Guid regionId)
         {
             return await dbcontext.Walks.Include(w => w.Region).Where(w => w.RegionId == regionId).ToListAsync();
-
         }
 
         public async Task<List<Walk>> GetWalksByUserIdAsync(string userId)
@@ -94,6 +95,21 @@ namespace NZWalks.API.Repositories
         public async Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty)
         {
             return await dbcontext.Walks.Include(w => w.Region).Where(w => w.DifficultyType == difficulty).ToListAsync();
+        }
+
+        public async Task<int> GetTotalWalksCountAsync(string? filterOn = null, string? filterQuery = null)
+        {
+            var walks = dbcontext.Walks.AsQueryable();
+            //Filtering
+            if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
+            {
+                if (filterOn.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = walks.Where(x => x.Name.Contains(filterQuery));
+                }
+            }
+
+            return await walks.CountAsync();
         }
     }
 }

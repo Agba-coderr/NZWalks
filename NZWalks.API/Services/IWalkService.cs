@@ -6,7 +6,7 @@ namespace NZWalks.API.Services
 {
     public interface IWalkService
     {
-        Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null);
+        Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10);
 
         Task<Result> GetWalksByUserIdAsync(string userId);
 

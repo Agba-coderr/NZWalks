@@ -77,11 +77,39 @@ namespace NZWalks.API.Services
             return Result.Success(_mapper.Map<WalkDto>(deleted), "Walk deleted successfully");
         }
 
-        public async Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null)
+        public async Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10)
         {
-            var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery);
+            if (pageNumber < 1)
+            {
+                return Result.Failure("Page number must be greater than 0.", 400);
+            }
 
-            return Result.Success(_mapper.Map<List<WalkDto>>(walks), "Walks retrieved successfully");
+            if (pageSize < 1)
+            {
+                return Result.Failure("Page size must be greater than 0.", 400);
+            }
+
+            if (pageSize > 50)
+            {
+                return Result.Failure("Page size cannot exceed 50.", 400);
+            }
+
+            var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
+
+            var totalRecords = await _walkRepository.GetTotalWalksCountAsync(filterOn, filterQuery);
+
+            var totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            var pagedResponse = new PagedResponse<WalkDto>
+            {
+                Data = _mapper.Map<List<WalkDto>>(walks),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = totalRecords,
+                TotalPages = totalPages,
+            };
+
+            return Result.Success(pagedResponse, "Walks retrieved successfully");
         }
 
         public async Task<Result> GetLongestWalkByUserIdAsync(string userId)

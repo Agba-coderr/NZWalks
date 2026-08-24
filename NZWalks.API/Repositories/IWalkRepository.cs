@@ -6,7 +6,9 @@ namespace NZWalks.API.Repositories
 {
     public interface IWalkRepository
     {
-        Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null);
+        Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10);
+
+        Task<int> GetTotalWalksCountAsync(string? filterOn = null, string? filterQuery = null);
 
         Task<List<Walk>> GetWalksByUserIdAsync(string userId);
 
