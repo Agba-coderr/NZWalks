@@ -5,7 +5,7 @@ namespace NZWalks.API.Services
 {
     public interface IRegionService
     {
-        Task<Result> GetAllRegionsAsync();
+        Task<Result> GetAllRegionsAsync(int pageNumber = 1, int pageSize = 10);
 
         Task<Result> GetRegionByIdAsync(Guid id);
 

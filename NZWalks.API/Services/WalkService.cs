@@ -79,35 +79,16 @@ namespace NZWalks.API.Services
 
         public async Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10)
         {
-            if (pageNumber < 1)
+            var validationResult = PaginationValidator.Validate(pageNumber, pageSize);
+
+            if (!validationResult.IsSuccess)
             {
-                return Result.Failure("Page number must be greater than 0.", 400);
+                return validationResult;
             }
 
-            if (pageSize < 1)
-            {
-                return Result.Failure("Page size must be greater than 0.", 400);
-            }
+            var (allWalks, totalCount) = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
 
-            if (pageSize > 50)
-            {
-                return Result.Failure("Page size cannot exceed 50.", 400);
-            }
-
-            var walks = await _walkRepository.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
-
-            var totalRecords = await _walkRepository.GetTotalWalksCountAsync(filterOn, filterQuery);
-
-            var totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            var pagedResponse = new PagedResponse<WalkDto>
-            {
-                Data = _mapper.Map<List<WalkDto>>(walks),
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                TotalRecords = totalRecords,
-                TotalPages = totalPages,
-            };
+            var pagedResponse = PagedResponse<WalkDto>.Create(_mapper.Map<List<WalkDto>>(allWalks), pageNumber, pageSize, totalCount);
 
             return Result.Success(pagedResponse, "Walks retrieved successfully");
         }
@@ -136,25 +117,59 @@ namespace NZWalks.API.Services
             return Result.Success(_mapper.Map<WalkDto>(walk), $"Walk with ID {id} retrieved successfully");
         }
 
-        public async Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty)
+        public async Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty, int pageNumber = 1, int pageSize = 10)
         {
-            var walks = await _walkRepository.GetWalksByDifficultyAsync(difficulty);
+            var validationResult = PaginationValidator.Validate(pageNumber, pageSize);
 
-            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks with difficulty: {difficulty} retrieved successfully");
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+
+            var (walks, totalCount) = await _walkRepository.GetWalksByDifficultyAsync(difficulty, pageNumber, pageSize);
+
+            var pagedResponse = PagedResponse<WalkDto>.Create(_mapper.Map<List<WalkDto>>(walks), pageNumber, pageSize, totalCount);
+
+            return Result.Success(pagedResponse, $"Walks with difficulty: {difficulty} retrieved successfully");
         }
 
-        public async Task<Result> GetWalksByRegionIdAsync(Guid regionId)
+        public async Task<Result> GetWalksByRegionIdAsync(Guid regionId, int pageNumber = 1, int pageSize = 10)
         {
-            var walks = await _walkRepository.GetWalksByRegionIdAsync(regionId);
+            var validationResult = PaginationValidator.Validate(pageNumber, pageSize);
 
-            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the region: {regionId} retrieved successfully");
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+
+            var region = await _regionRepository.GetRegionByIdAsync(regionId);
+
+            if (region == null)
+            {
+                return Result.Failure($"Region with ID {regionId} does not exist.", 404);
+            }
+
+            var (walks, totalCount) = await _walkRepository.GetWalksByRegionIdAsync(regionId, pageNumber, pageSize);
+
+            var pagedResponse = PagedResponse<WalkDto>.Create(_mapper.Map<List<WalkDto>>(walks), pageNumber, pageSize, totalCount);
+
+            return Result.Success(pagedResponse, $"Walks for the region: {regionId} retrieved successfully");
         }
 
-        public async Task<Result> GetWalksByUserIdAsync(string userId)
+        public async Task<Result> GetWalksByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10)
         {
-            var walks = await _walkRepository.GetWalksByUserIdAsync(userId);
+            var validationResult = PaginationValidator.Validate(pageNumber, pageSize);
 
-            return Result.Success(_mapper.Map<List<WalkDto>>(walks), $"Walks for the user: {userId} retrieved successfully");
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+
+            var (walks, totalCount) = await _walkRepository.GetWalksByUserIdAsync(userId, pageNumber, pageSize);
+
+            var pagedResponse = PagedResponse<WalkDto>.Create(_mapper.Map<List<WalkDto>>(walks), pageNumber, pageSize, totalCount);
+
+            return Result.Success(pagedResponse, $"Walks for the user: {userId} retrieved successfully");
         }
 
         public async Task<Result> UpdateWalkAsync(Guid id, UpdateWalkDto updateWalkDto, string currentUserId, bool isAdmin)

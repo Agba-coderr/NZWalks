@@ -11,18 +11,18 @@ namespace NZWalks.API.Controllers
     [ApiController]
     public class RegionsController : ControllerBase
     {
-        private readonly IRegionService regionService;
+        private readonly IRegionService _regionService;
 
         public RegionsController(IRegionService regionService)
         {
-            this.regionService = regionService;
+            _regionService = regionService;
         }
 
         [HttpGet]
         [Authorize(Roles = "Reader,Writer,Admin")]
-        public async Task<IActionResult> GetAllRegions()
+        public async Task<IActionResult> GetAllRegions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var results = await regionService.GetAllRegionsAsync();
+            var results = await _regionService.GetAllRegionsAsync(pageNumber, pageSize);
 
             return StatusCode(results.Status, results);
         }
@@ -32,7 +32,7 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetRegionById([FromRoute] Guid id)
         {
-            var result = await regionService.GetRegionByIdAsync(id);
+            var result = await _regionService.GetRegionByIdAsync(id);
 
             return StatusCode(result.Status, result);
         }
@@ -42,7 +42,7 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateRegion([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
-            var result = await regionService.CreateRegionAsync(addRegionRequestDto);
+            var result = await _regionService.CreateRegionAsync(addRegionRequestDto);
 
             return StatusCode(result.Status, result);
         }
@@ -53,7 +53,7 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateRegion([FromRoute] Guid id, [FromBody] UpdateRegionDto updateRegionDto)
         {
-            var result = await regionService.UpdateRegionAsync(id, updateRegionDto);
+            var result = await _regionService.UpdateRegionAsync(id, updateRegionDto);
 
             return StatusCode(result.Status, result);
         }
@@ -63,7 +63,7 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteRegion([FromRoute] Guid id)
         {
-            var result = await regionService.DeleteRegionAsync(id);
+            var result = await _regionService.DeleteRegionAsync(id);
 
             return StatusCode(result.Status, result);
         }

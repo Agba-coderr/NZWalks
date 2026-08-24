@@ -9,5 +9,19 @@
         public int TotalRecords { get; init; }
         public bool HasNextPage => PageNumber < TotalPages;
         public bool HasPreviousPage => PageNumber > 1;
+
+        public static PagedResponse<T> Create(IReadOnlyList<T> data, int pageNumber, int pageSize, int totalRecords) 
+        { 
+            var totalPages = (int)Math.Ceiling((double)totalRecords / pageSize); 
+
+            return new PagedResponse<T> 
+            { 
+                Data = data, 
+                PageNumber = pageNumber, 
+                PageSize = pageSize, 
+                TotalPages = totalPages, 
+                TotalRecords = totalRecords 
+            }; 
+        }
     }
 }

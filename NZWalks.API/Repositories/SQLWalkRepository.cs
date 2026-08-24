@@ -3,41 +3,42 @@ using NZWalks.API.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Models.Enums;
+using NZWalks.API.Extensions;
 
 
 namespace NZWalks.API.Repositories
 {
     public class SQLWalkRepository : IWalkRepository
     {
-        private readonly NZWalksDbContext dbcontext;
+        private readonly NZWalksDbContext _dbcontext;
 
         public SQLWalkRepository(NZWalksDbContext dbcontext)
         {
-            this.dbcontext = dbcontext;
+            _dbcontext = dbcontext;
         }
         public async Task<Walk> CreateWalkAsync(Walk walk)
         {
-            await dbcontext.Walks.AddAsync(walk);
-            await dbcontext.SaveChangesAsync();
+            await _dbcontext.Walks.AddAsync(walk);
+            await _dbcontext.SaveChangesAsync();
             return walk;
         }
 
         public async Task<Walk?> DeleteWalkAsync(Guid id)
         {
-            var existingWalk = await dbcontext.Walks.FindAsync(id);
+            var existingWalk = await _dbcontext.Walks.FindAsync(id);
             if (existingWalk == null)
             {
                 return null;
             }
 
-            dbcontext.Walks.Remove(existingWalk);
-            await dbcontext.SaveChangesAsync();
+            _dbcontext.Walks.Remove(existingWalk);
+            await _dbcontext.SaveChangesAsync();
             return existingWalk;
         }
 
-        public async Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10)
+        public async Task<(List<Walk> Walks, int TotalCount)> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10)
         {
-            var walks = dbcontext.Walks.Include(w => w.Region).AsQueryable();
+            var walks = _dbcontext.Walks.Include(w => w.Region).AsQueryable();
             //Filtering
             if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
             {
@@ -46,35 +47,49 @@ namespace NZWalks.API.Repositories
                     walks = walks.Where(x => x.Name.Contains(filterQuery));
                 }
             }
-            //Pagination
-            var skipResults = (pageNumber - 1) * pageSize;
 
-            return await walks.Skip(skipResults).Take(pageSize).ToListAsync();
+            var totalCount = await walks.CountAsync();
+
+            var allWalks = await walks.Paginate(pageNumber, pageSize).ToListAsync();
+
+            return (allWalks, totalCount);
         }
 
         public async Task<Walk?> GetWalkByIdAsync(Guid id)
         {
-            return await dbcontext.Walks.Include(w => w.Region).FirstOrDefaultAsync(w => w.Id == id);
+            return await _dbcontext.Walks.Include(w => w.Region).FirstOrDefaultAsync(w => w.Id == id);
         }
 
-        public async Task<List<Walk>> GetWalksByRegionIdAsync(Guid regionId)
+        public async Task<(List<Walk> Walks, int TotalCount)> GetWalksByRegionIdAsync(Guid regionId, int pageNumber = 1, int pageSize = 10)
         {
-            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.RegionId == regionId).ToListAsync();
+            var walks = _dbcontext.Walks.Include(w => w.Region).Where(w => w.RegionId == regionId).AsQueryable();
+
+            var totalCount = await walks.CountAsync();
+
+            var walkList = await walks.Paginate(pageNumber, pageSize).ToListAsync();
+
+            return (walkList, totalCount);
         }
 
-        public async Task<List<Walk>> GetWalksByUserIdAsync(string userId)
+        public async Task<(List<Walk> Walks, int TotalCount)> GetWalksByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10)
         {
-            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).ToListAsync();
+            var walks = _dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).AsQueryable();
+
+            var totalCount = await walks.CountAsync();
+
+            var walkList = await walks.Paginate(pageNumber, pageSize).ToListAsync();
+
+            return (walkList, totalCount);
         }
 
         public async Task<Walk?> GetLongestWalkByUserIdAsync(string userId)
         {
-            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
+            return await _dbcontext.Walks.Include(w => w.Region).Where(w => w.CreatedByUserId == userId).OrderByDescending(w => w.LengthInKm).FirstOrDefaultAsync();
         }
 
         public async Task<Walk?> UpdateWalkAsync(Guid id, Walk walk)
         {
-            var exisitingWalk = await dbcontext.Walks.FindAsync(id);
+            var exisitingWalk = await _dbcontext.Walks.FindAsync(id);
 
             if (exisitingWalk == null)
             {
@@ -88,28 +103,19 @@ namespace NZWalks.API.Repositories
             exisitingWalk.DifficultyType = walk.DifficultyType;
             exisitingWalk.RegionId = walk.RegionId;
 
-            await dbcontext.SaveChangesAsync();
+            await _dbcontext.SaveChangesAsync();
             return exisitingWalk;
         }
 
-        public async Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty)
+        public async Task<(List<Walk> Walks, int TotalCount)> GetWalksByDifficultyAsync(DifficultyType difficulty, int pageNumber = 1, int pageSize = 10)
         {
-            return await dbcontext.Walks.Include(w => w.Region).Where(w => w.DifficultyType == difficulty).ToListAsync();
-        }
+            var walks = _dbcontext.Walks.Include(w => w.Region).Where(w => w.DifficultyType == difficulty).AsQueryable();
 
-        public async Task<int> GetTotalWalksCountAsync(string? filterOn = null, string? filterQuery = null)
-        {
-            var walks = dbcontext.Walks.AsQueryable();
-            //Filtering
-            if(string.IsNullOrWhiteSpace(filterOn) == false && string.IsNullOrWhiteSpace(filterQuery) == false)
-            {
-                if (filterOn.Equals("Name", StringComparison.OrdinalIgnoreCase))
-                {
-                    walks = walks.Where(x => x.Name.Contains(filterQuery));
-                }
-            }
+            var totalCount = await walks.CountAsync();
 
-            return await walks.CountAsync();
+            var walkList = await walks.Paginate(pageNumber, pageSize).ToListAsync();
+
+            return (walkList, totalCount);
         }
     }
 }

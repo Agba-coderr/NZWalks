@@ -8,65 +8,74 @@ namespace NZWalks.API.Services
 {
     public class RegionService : IRegionService
     {
-        private readonly IRegionRepository regionRepository;
-        private readonly IMapper mapper;
+        private readonly IRegionRepository _regionRepository;
+        private readonly IMapper _mapper;
 
         public RegionService(IRegionRepository regionRepository, IMapper mapper)
         {
-            this.regionRepository = regionRepository;
-            this.mapper = mapper;
+            _regionRepository = regionRepository;
+            _mapper = mapper;
         }
 
         public async Task<Result> CreateRegionAsync(AddRegionRequestDto addRegionRequestDto)
         {
-            var region = mapper.Map<Region>(addRegionRequestDto);
-            var createdRegion = await regionRepository.CreateRegionAsync(region);
+            var region = _mapper.Map<Region>(addRegionRequestDto);
+            var createdRegion = await _regionRepository.CreateRegionAsync(region);
 
-            return Result.Success(mapper.Map<RegionDto>(createdRegion), "Region created successfully");
+            return Result.Success(_mapper.Map<RegionDto>(createdRegion), "Region created successfully");
         }
 
         public async Task<Result> DeleteRegionAsync(Guid id)
         {
-            var deletedRegion = await regionRepository.DeleteRegionAsync(id);
+            var deletedRegion = await _regionRepository.DeleteRegionAsync(id);
 
             if (deletedRegion == null)
             {
                 return Result.Failure($"Region with ID {id} was not found", 404);
             }
 
-            return Result.Success(mapper.Map<RegionDto>(deletedRegion), "Region deleted successfully");
+            return Result.Success(_mapper.Map<RegionDto>(deletedRegion), "Region deleted successfully");
         }
 
-        public async Task<Result> GetAllRegionsAsync()
+        public async Task<Result> GetAllRegionsAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var regions = await regionRepository.GetAllRegionsAsync();
+            var validationResult = PaginationValidator.Validate(pageNumber, pageSize);
 
-            return Result.Success(mapper.Map<List<RegionDto>>(regions), "Regions retrieved successfully");
+            if (!validationResult.IsSuccess)
+            {
+                return validationResult;
+            }
+
+            var (regions, totalCount) = await _regionRepository.GetAllRegionsAsync(pageNumber, pageSize);
+
+            var pagedResponse = PagedResponse<RegionDto>.Create(_mapper.Map<List<RegionDto>>(regions), pageNumber, pageSize, totalCount);
+
+            return Result.Success(pagedResponse, "Regions retrieved successfully");
         }
 
         public async Task<Result> GetRegionByIdAsync(Guid id)
         {
-            var region = await regionRepository.GetRegionByIdAsync(id);
+            var region = await _regionRepository.GetRegionByIdAsync(id);
 
             if (region == null)
             {
                 return Result.Failure($"Region with ID {id} was not found", 404);
             }
 
-            return Result.Success(mapper.Map<RegionDto>(region), "Region retrieved successfully");
+            return Result.Success(_mapper.Map<RegionDto>(region), "Region retrieved successfully");
         }
 
         public async Task<Result> UpdateRegionAsync(Guid id, UpdateRegionDto updateRegionDto)
         {
-            var region = mapper.Map<Region>(updateRegionDto);
-            var updatedRegion = await regionRepository.UpdateRegionAsync(id, region);
+            var region = _mapper.Map<Region>(updateRegionDto);
+            var updatedRegion = await _regionRepository.UpdateRegionAsync(id, region);
 
             if (updatedRegion == null)
             {
                 return Result.Failure($"Region with ID {id} was not found", 404);
             }
 
-            return Result.Success(mapper.Map<RegionDto>(updatedRegion), "Region updated successfully");
+            return Result.Success(_mapper.Map<RegionDto>(updatedRegion), "Region updated successfully");
         }
     }
 }

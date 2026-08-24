@@ -9,11 +9,11 @@ namespace NZWalks.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthenticationService authenticationService;
+        private readonly IAuthenticationService _authenticationService;
 
         public AuthController(IAuthenticationService authenticationService)
         {
-            this.authenticationService = authenticationService;
+            _authenticationService = authenticationService;
         }
 
         //POST: /api/Auth/Register
@@ -21,7 +21,7 @@ namespace NZWalks.API.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
         {
-            var response = await authenticationService.RegisterAsync(registerRequestDto);
+            var response = await _authenticationService.RegisterAsync(registerRequestDto);
 
             return StatusCode(response.Status, response);
         }
@@ -31,7 +31,7 @@ namespace NZWalks.API.Controllers
         [Route("VerifyEmail")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
         {
-            var response = await authenticationService.VerifyEmailAsync(userId, token);
+            var response = await _authenticationService.VerifyEmailAsync(userId, token);
 
             return StatusCode(response.Status, response);
         }
@@ -41,7 +41,7 @@ namespace NZWalks.API.Controllers
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
         {
-            var response = await authenticationService.LoginAsync(loginRequestDto);
+            var response = await _authenticationService.LoginAsync(loginRequestDto);
 
             return StatusCode(response.Status, response);
         }
@@ -51,7 +51,7 @@ namespace NZWalks.API.Controllers
         [Route("ResendVerificationEmail")]
         public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendVerificationEmailRequestDto requestDto)
         {
-            var response = await authenticationService.ResendVerificationEmailAsync(requestDto.Email);
+            var response = await _authenticationService.ResendVerificationEmailAsync(requestDto.Email);
             return StatusCode(response.Status, response);
         }
     }

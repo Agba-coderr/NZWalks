@@ -12,13 +12,13 @@ namespace NZWalks.API.Controllers
     [ApiController]
     public class ImagesController : ControllerBase
     {
-        private readonly IMapper mapper;
-        private readonly IImageRepository imageRepository;
+        private readonly IMapper _mapper;
+        private readonly IImageRepository _imageRepository;
 
         public ImagesController(IMapper mapper, IImageRepository imageRepository)
         {
-            this.mapper = mapper;
-            this.imageRepository = imageRepository;
+            _mapper = mapper;
+            _imageRepository = imageRepository;
         }
 
         // POST: /api/Images/Upload
@@ -28,10 +28,10 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> Upload([FromForm] ImageUploadRequestDto request)
         {
             // 1. Map DTO to Domain Model using AutoMapper
-            var imageDomainModel = mapper.Map<Image>(request);
+            var imageDomainModel = _mapper.Map<Image>(request);
 
             // 2. Use Repository to save file and persist DB record
-            await imageRepository.Upload(imageDomainModel);
+            await _imageRepository.Upload(imageDomainModel);
 
             return Ok(imageDomainModel);
         }

@@ -15,11 +15,11 @@ namespace NZWalks.API.Controllers
     [ApiController]
     public class WalksController : ControllerBase
     {
-        private readonly IWalkService walkService;
+        private readonly IWalkService _walkService;
 
         public WalksController(IWalkService walkService)
         {
-            this.walkService = walkService;
+            _walkService = walkService;
         }
 
         [HttpGet]
@@ -27,7 +27,7 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> GetAllWalks([FromQuery] string? filterOn, [FromQuery] string? filterQuery, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             
-            var result = await walkService.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
+            var result = await _walkService.GetAllWalksAsync(filterOn, filterQuery, pageNumber, pageSize);
 
             return StatusCode(result.Status, result);
         }
@@ -37,7 +37,7 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer,Admin")]
         public async Task<IActionResult> GetWalkById([FromRoute] Guid id)
         {
-            var result = await walkService.GetWalkByIdAsync(id);
+            var result = await _walkService.GetWalkByIdAsync(id);
 
             return StatusCode(result.Status, result);
         }
@@ -45,7 +45,7 @@ namespace NZWalks.API.Controllers
         [HttpGet]
         [Route("user")]
         [Authorize(Roles = "Writer,Admin")]
-        public async Task<IActionResult> GetWalksByUserId()
+        public async Task<IActionResult> GetWalksByUserId([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -56,7 +56,7 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            var result = await walkService.GetWalksByUserIdAsync(userId);
+            var result = await _walkService.GetWalksByUserIdAsync(userId, pageNumber, pageSize);
 
             return StatusCode(result.Status, result);
         }
@@ -75,7 +75,7 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
 
-            var result = await walkService.GetLongestWalkByUserIdAsync(userId);
+            var result = await _walkService.GetLongestWalkByUserIdAsync(userId);
 
             return StatusCode(result.Status, result);
         }
@@ -83,9 +83,9 @@ namespace NZWalks.API.Controllers
         [HttpGet]
         [Route("region/{regionId:Guid}")]
         [Authorize(Roles = "Reader,Writer,Admin")]
-        public async Task<IActionResult> GetWalksByRegionId([FromRoute] Guid regionId)
+        public async Task<IActionResult> GetWalksByRegionId([FromRoute] Guid regionId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var result = await walkService.GetWalksByRegionIdAsync(regionId);
+            var result = await _walkService.GetWalksByRegionIdAsync(regionId, pageNumber, pageSize);
 
             return StatusCode(result.Status, result);
         }
@@ -93,9 +93,9 @@ namespace NZWalks.API.Controllers
         [HttpGet]
         [Route("difficulty")]
         [Authorize(Roles = "Reader,Writer,Admin")]
-        public async Task<IActionResult> GetWalksByDifficulty(DifficultyType difficulty)
+        public async Task<IActionResult> GetWalksByDifficulty(DifficultyType difficulty, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var result = await walkService.GetWalksByDifficultyAsync(difficulty);
+            var result = await _walkService.GetWalksByDifficultyAsync(difficulty, pageNumber, pageSize);
 
             return StatusCode(result.Status, result);
         }
@@ -113,7 +113,7 @@ namespace NZWalks.API.Controllers
                 return StatusCode(failureResponse.Status, failureResponse);
             }
             
-            var result = await walkService.CreateWalkAsync(addWalkRequestDto, userId);
+            var result = await _walkService.CreateWalkAsync(addWalkRequestDto, userId);
 
             return StatusCode(result.Status, result);
         }
@@ -134,7 +134,7 @@ namespace NZWalks.API.Controllers
 
             var isAdmin = User.IsInRole("Admin");
 
-            var result = await walkService.UpdateWalkAsync(id, updateWalkDto, userId, isAdmin);
+            var result = await _walkService.UpdateWalkAsync(id, updateWalkDto, userId, isAdmin);
 
             return StatusCode(result.Status, result);
         }
@@ -154,7 +154,7 @@ namespace NZWalks.API.Controllers
 
             var isAdmin = User.IsInRole("Admin");
 
-            var result = await walkService.DeleteWalkAsync(id, userId, isAdmin);
+            var result = await _walkService.DeleteWalkAsync(id, userId, isAdmin);
 
             return StatusCode(result.Status, result);
         }

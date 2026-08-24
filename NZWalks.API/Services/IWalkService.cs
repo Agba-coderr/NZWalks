@@ -8,11 +8,11 @@ namespace NZWalks.API.Services
     {
         Task<Result> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10);
 
-        Task<Result> GetWalksByUserIdAsync(string userId);
+        Task<Result> GetWalksByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10);
 
-        Task<Result> GetWalksByRegionIdAsync(Guid regionId);
+        Task<Result> GetWalksByRegionIdAsync(Guid regionId, int pageNumber = 1, int pageSize = 10);
 
-        Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty);
+        Task<Result> GetWalksByDifficultyAsync(DifficultyType difficulty, int pageNumber = 1, int pageSize = 10);
 
         Task<Result> GetLongestWalkByUserIdAsync(string userId);
 

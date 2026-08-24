@@ -6,15 +6,13 @@ namespace NZWalks.API.Repositories
 {
     public interface IWalkRepository
     {
-        Task<List<Walk>> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10);
+        Task<(List<Walk> Walks, int TotalCount)> GetAllWalksAsync(string? filterOn = null, string? filterQuery = null, int pageNumber = 1, int pageSize = 10);
 
-        Task<int> GetTotalWalksCountAsync(string? filterOn = null, string? filterQuery = null);
+        Task<(List<Walk> Walks, int TotalCount)> GetWalksByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10);
 
-        Task<List<Walk>> GetWalksByUserIdAsync(string userId);
+        Task<(List<Walk> Walks, int TotalCount)> GetWalksByRegionIdAsync(Guid regionId, int pageNumber = 1, int pageSize = 10);
 
-        Task<List<Walk>> GetWalksByRegionIdAsync(Guid regionId);
-
-        Task<List<Walk>> GetWalksByDifficultyAsync(DifficultyType difficulty);
+        Task<(List<Walk> Walks, int TotalCount)> GetWalksByDifficultyAsync(DifficultyType difficulty, int pageNumber = 1, int pageSize = 10);
 
         Task<Walk?> GetLongestWalkByUserIdAsync(string userId);
 
